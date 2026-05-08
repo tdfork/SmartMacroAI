@@ -36,6 +36,8 @@ public static class Win32Api
     public const uint WM_GETTEXTLENGTH = 0x000E;
     public const uint WM_MOUSEMOVE     = 0x0200;
     public const uint WM_CLOSE         = 0x0010;
+    public const uint WM_ACTIVATE      = 0x0006;
+    public const uint WA_ACTIVE        = 1;
 
     public const uint MK_LBUTTON = 0x0001;
     public const uint MK_RBUTTON = 0x0002;
@@ -265,11 +267,14 @@ public static class Win32Api
     // ═══════════════════════════════════════════════
 
     /// <summary>
-    /// PostMessage-based left click with longer pre-click delay for hidden/minimized windows.
+    /// PostMessage-based left click with WM_ACTIVATE trick for DirectX games.
     /// Sends WM_MOUSEMOVE first to establish position, then a staggered click sequence.
     /// </summary>
     public static async Task ControlClickAsync(IntPtr hWnd, int x, int y, int moveDelayMs = 10)
     {
+        PostMessage(hWnd, WM_ACTIVATE, (IntPtr)WA_ACTIVE, IntPtr.Zero);
+        await Task.Delay(10);
+
         IntPtr lParam = MakeLParam(x, y);
         PostMessage(hWnd, WM_MOUSEMOVE, IntPtr.Zero, lParam);
         await Task.Delay(moveDelayMs);
@@ -279,16 +284,19 @@ public static class Win32Api
     }
 
     /// <summary>
-    /// Stealth-aware click: extra delay after WM_MOUSEMOVE for hidden windows,
-    /// then a staggered DOWN → HOLD → UP sequence.
+    /// Stealth-aware click: WM_ACTIVATE trick for DirectX games, then
+    /// WM_MOUSEMOVE → staggered DOWN → HOLD → UP sequence.
     /// </summary>
     public static async Task StealthClickAsync(IntPtr hWnd, int x, int y)
     {
+        PostMessage(hWnd, WM_ACTIVATE, (IntPtr)WA_ACTIVE, IntPtr.Zero);
+        await Task.Delay(10);
+
         IntPtr lParam = MakeLParam(x, y);
         PostMessage(hWnd, WM_MOUSEMOVE, IntPtr.Zero, lParam);
-        await Task.Delay(50); // longer delay for hidden/minimized windows
+        await Task.Delay(5);
         PostMessage(hWnd, WM_LBUTTONDOWN, (IntPtr)MK_LBUTTON, lParam);
-        await Task.Delay(50);
+        await Task.Delay(20);
         PostMessage(hWnd, WM_LBUTTONUP, IntPtr.Zero, lParam);
     }
 
@@ -355,9 +363,16 @@ public static class Win32Api
 
     public static void ControlSendKey(IntPtr hWnd, int virtualKeyCode)
     {
-        PostMessage(hWnd, WM_KEYDOWN, (IntPtr)virtualKeyCode, IntPtr.Zero);
-        PostMessage(hWnd, WM_KEYUP, (IntPtr)virtualKeyCode, IntPtr.Zero);
+        PostMessage(hWnd, WM_ACTIVATE, (IntPtr)WA_ACTIVE, IntPtr.Zero);
+        uint scan = MapVirtualKeyA((uint)virtualKeyCode, 0);
+        IntPtr lpDn = (IntPtr)(1 | (scan << 16));
+        IntPtr lpUp = (IntPtr)(1 | (scan << 16) | (1 << 30) | unchecked((int)(1u << 31)));
+        PostMessage(hWnd, WM_KEYDOWN, (IntPtr)virtualKeyCode, lpDn);
+        PostMessage(hWnd, WM_KEYUP, (IntPtr)virtualKeyCode, lpUp);
     }
+
+    [DllImport("user32.dll")]
+    private static extern uint MapVirtualKeyA(uint uCode, uint uMapType);
 
     /// <summary>
     /// Shows or hides a window without affecting its message queue.

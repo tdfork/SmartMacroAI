@@ -56,10 +56,14 @@ public static class ScreenshotHelper
     /// </summary>
     public static string? CaptureWindow(IntPtr hwnd, string outputFolder)
     {
+        if (hwnd == IntPtr.Zero) return null;
+
+        IntPtr hdcScreen = IntPtr.Zero;
+        IntPtr hdcMem = IntPtr.Zero;
+        IntPtr hBitmap = IntPtr.Zero;
+
         try
         {
-            if (hwnd == IntPtr.Zero) return null;
-
             if (!GetWindowRect(hwnd, out RECT rect))
                 return null;
 
@@ -74,13 +78,11 @@ public static class ScreenshotHelper
             string fileName = $"error_{DateTime.Now:yyyyMMdd_HHmmss}.png";
             string filePath = Path.Combine(outputFolder, fileName);
 
-            // Use screen DC for BitBlt (more reliable than window DC)
-            IntPtr hdcScreen = GetDC(IntPtr.Zero);
-            IntPtr hdcMem = CreateCompatibleDC(hdcScreen);
-            IntPtr hBitmap = CreateCompatibleBitmap(hdcScreen, width, height);
+            hdcScreen = GetDC(IntPtr.Zero);
+            hdcMem = CreateCompatibleDC(hdcScreen);
+            hBitmap = CreateCompatibleBitmap(hdcScreen, width, height);
             IntPtr hOld = SelectObject(hdcMem, hBitmap);
 
-            // Copy from screen coordinates (relative to desktop)
             BitBlt(hdcMem, 0, 0, width, height, hdcScreen,
                    rect.Left, rect.Top, SRCCOPY);
 
@@ -89,15 +91,17 @@ public static class ScreenshotHelper
             using var bitmap = Image.FromHbitmap(hBitmap);
             bitmap.Save(filePath, ImageFormat.Png);
 
-            DeleteObject(hBitmap);
-            DeleteDC(hdcMem);
-            ReleaseDC(IntPtr.Zero, hdcScreen);
-
             return filePath;
         }
         catch
         {
             return null;
+        }
+        finally
+        {
+            if (hBitmap != IntPtr.Zero) DeleteObject(hBitmap);
+            if (hdcMem != IntPtr.Zero) DeleteDC(hdcMem);
+            if (hdcScreen != IntPtr.Zero) ReleaseDC(IntPtr.Zero, hdcScreen);
         }
     }
 

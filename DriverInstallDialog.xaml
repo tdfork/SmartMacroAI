@@ -35,6 +35,11 @@
             <Italic Foreground="#888"><Run Text="{DynamicResource ui_Drv_Compat}"/></Italic>
         </TextBlock>
 
+        <!-- AMD Ryzen Warning -->
+        <TextBlock Grid.Row="1" Margin="0,8,0,0" TextWrapping="Wrap" VerticalAlignment="Bottom"
+                   Foreground="#F9E2AF" FontSize="11"
+                   Text="{DynamicResource ui_Drv_AmdNote}"/>
+
         <!-- Progress -->
         <StackPanel Grid.Row="2" Margin="0,12,0,0" x:Name="ProgressPanel" Visibility="Collapsed">
             <ProgressBar IsIndeterminate="True" Height="6" Margin="0,0,0,6" Background="#333" Foreground="#4FC3F7"/>

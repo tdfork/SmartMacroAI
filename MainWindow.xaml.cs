@@ -79,6 +79,14 @@ public partial class MainWindow : Window
     // ── Run guard: prevent concurrent macro execution via atomic counter ──
     private int _macroStartCount;
 
+    // ── Undo/Redo ──
+    private readonly Stack<string> _undoStack = new();
+    private readonly Stack<string> _redoStack = new();
+    private const int UndoLimit = 50;
+
+    // ── Action clipboard ──
+    private string? _actionClipboard;
+
     private string _activeView = "Dashboard";
     private bool _suppressLanguageCombo;
 
@@ -89,7 +97,7 @@ public partial class MainWindow : Window
     // ── Update Checker ──
     /// <summary>Fallback display / parse if assembly version is unavailable.</summary>
     public static string AppVersion => CurrentVersion;
-    private const string CurrentVersion   = "v1.5.6";
+    private const string CurrentVersion   = "v1.5.7";
     private const string GitHubApiUrl     = "https://api.github.com/repos/TroniePh/SmartMacroAI/releases/latest";
     private const string LandingPageUrl   = "https://tronieph.github.io/SmartMacroAI-Website/";
     /// <summary>GitHub rejects API calls without a descriptive User-Agent.</summary>
@@ -649,12 +657,13 @@ public partial class MainWindow : Window
 
     private static Drawing.Icon CreateFallbackTrayIcon()
     {
-        var bmp = new Drawing.Bitmap(16, 16);
+        using var bmp = new Drawing.Bitmap(16, 16);
         using var g = Drawing.Graphics.FromImage(bmp);
         g.Clear(Drawing.Color.FromArgb(137, 180, 250));
         using var font = new Drawing.Font("Segoe UI", 9, Drawing.FontStyle.Bold);
         g.DrawString("S", font, Drawing.Brushes.Black, 1, 0);
-        return Drawing.Icon.FromHandle(bmp.GetHicon());
+        IntPtr hIcon = bmp.GetHicon();
+        return Drawing.Icon.FromHandle(hIcon);
     }
 
     // ═══════════════════════════════════════════════════
@@ -1643,13 +1652,16 @@ public partial class MainWindow : Window
 
     private void Canvas_Drop(object sender, DragEventArgs e)
     {
+        if (e.Handled) return;
         if (!e.Data.GetDataPresent(DataFormats.StringFormat)) return;
         string actionType = (string)e.Data.GetData(DataFormats.StringFormat);
         MacroAction? action = CreateActionFromType(actionType);
         if (action is null) return;
+        PushUndo();
         _actions.Add(action);
         RebuildCanvas();
         AppendLog($"Added action: {action.DisplayName}");
+        e.Handled = true;
     }
 
     private void NestedBranch_DragOver(object sender, DragEventArgs e)
@@ -1672,6 +1684,7 @@ public partial class MainWindow : Window
             case NestedBranchTag nb:
             {
                 MacroAction? action = null;
+                PushUndo();
 
                 if (e.Data.GetDataPresent(DataFormats.StringFormat))
                 {
@@ -1680,10 +1693,12 @@ public partial class MainWindow : Window
                 }
                 else if (e.Data.GetData(typeof(MacroAction)) is MacroAction ma)
                 {
-                    // Moving an existing root action into a nested branch
+                    // Remove from old location (root or any nested branch)
                     int oldIdx = _actions.IndexOf(ma);
                     if (oldIdx >= 0)
                         _actions.RemoveAt(oldIdx);
+                    else
+                        RemoveActionFromAllBranches(ma);
                     action = ma;
                 }
 
@@ -1748,8 +1763,6 @@ public partial class MainWindow : Window
         MacroAction? action = FindMacroActionInWorkflowAncestors(src);
         if (action is null)
             return;
-        if (!_actions.Contains(action))
-            return;
 
         _dragStartPoint = e.GetPosition(this);
         _potentialDragAction = action;
@@ -1789,12 +1802,10 @@ public partial class MainWindow : Window
 
     private void Workflow_Drop(object sender, DragEventArgs e)
     {
+        if (e.Handled) return;
         if (e.Data.GetData(typeof(MacroAction)) is not MacroAction dragged)
             return;
-
-        int oldIndex = _actions.IndexOf(dragged);
-        if (oldIndex < 0)
-            return;
+        PushUndo();
 
         if (sender is not ItemsControl itemsControl)
             return;
@@ -1818,18 +1829,24 @@ public partial class MainWindow : Window
             }
         }
 
-        if (insertBefore == oldIndex)
+        int oldIndex = _actions.IndexOf(dragged);
+        if (oldIndex >= 0)
         {
-            e.Handled = true;
-            return;
+            if (insertBefore == oldIndex)
+            {
+                e.Handled = true;
+                return;
+            }
+            if (insertBefore > oldIndex)
+                insertBefore--;
+            _actions.RemoveAt(oldIndex);
+        }
+        else
+        {
+            RemoveActionFromAllBranches(dragged);
         }
 
-        if (insertBefore > oldIndex)
-            insertBefore--;
-
-        _actions.RemoveAt(oldIndex);
-        _actions.Insert(insertBefore, dragged);
-
+        _actions.Insert(Math.Min(insertBefore, _actions.Count), dragged);
         RebuildCanvas();
         e.Handled = true;
     }
@@ -1838,6 +1855,175 @@ public partial class MainWindow : Window
     {
         if (ReferenceEquals(Mouse.Captured, MacroCanvas))
             MacroCanvas.ReleaseMouseCapture();
+    }
+
+    private bool RemoveActionFromAllBranches(MacroAction target)
+    {
+        foreach (var a in _actions)
+        {
+            if (RemoveFromNestedLists(a, target))
+                return true;
+        }
+        return false;
+    }
+
+    private static bool RemoveFromNestedLists(MacroAction parent, MacroAction target)
+    {
+        List<List<MacroAction>> lists = parent switch
+        {
+            IfImageAction img => [img.ThenActions, img.ElseActions],
+            IfVariableAction iv => [iv.ThenActions, iv.ElseActions],
+            IfTextAction it => [it.ThenActions, it.ElseActions],
+            RepeatAction r => [r.LoopActions],
+            TryCatchAction tc => [tc.TryActions, tc.CatchActions],
+            _ => [],
+        };
+
+        foreach (var list in lists)
+        {
+            if (list.Remove(target))
+                return true;
+            foreach (var child in list)
+            {
+                if (RemoveFromNestedLists(child, target))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    // ═══════════════════════════════════════════════════
+    //  UNDO / REDO
+    // ═══════════════════════════════════════════════════
+
+    private static readonly JsonSerializerOptions _jsonClone = new() { WriteIndented = false };
+
+    private void PushUndo()
+    {
+        try
+        {
+            string snapshot = JsonSerializer.Serialize(_actions.ToList(), _jsonClone);
+            _undoStack.Push(snapshot);
+            if (_undoStack.Count > UndoLimit)
+            {
+                var tmp = new Stack<string>(_undoStack.Reverse().Skip(_undoStack.Count - UndoLimit));
+                _undoStack.Clear();
+                foreach (var item in tmp.Reverse()) _undoStack.Push(item);
+            }
+            _redoStack.Clear();
+        }
+        catch { /* serialization failure — skip snapshot */ }
+    }
+
+    private void PerformUndo()
+    {
+        if (_undoStack.Count == 0) return;
+        try
+        {
+            string current = JsonSerializer.Serialize(_actions.ToList(), _jsonClone);
+            _redoStack.Push(current);
+            string prev = _undoStack.Pop();
+            var restored = JsonSerializer.Deserialize<List<MacroAction>>(prev, _jsonClone);
+            if (restored is null) return;
+            _actions.Clear();
+            foreach (var a in restored) _actions.Add(a);
+            RebuildCanvas();
+        }
+        catch { /* deserialization failure — skip */ }
+    }
+
+    private void PerformRedo()
+    {
+        if (_redoStack.Count == 0) return;
+        try
+        {
+            string current = JsonSerializer.Serialize(_actions.ToList(), _jsonClone);
+            _undoStack.Push(current);
+            string next = _redoStack.Pop();
+            var restored = JsonSerializer.Deserialize<List<MacroAction>>(next, _jsonClone);
+            if (restored is null) return;
+            _actions.Clear();
+            foreach (var a in restored) _actions.Add(a);
+            RebuildCanvas();
+        }
+        catch { /* deserialization failure — skip */ }
+    }
+
+    // ═══════════════════════════════════════════════════
+    //  COPY / PASTE
+    // ═══════════════════════════════════════════════════
+
+    private void CopySelectedAction()
+    {
+        if (_potentialDragAction is not null)
+        {
+            try
+            {
+                _actionClipboard = JsonSerializer.Serialize<MacroAction>(_potentialDragAction, _jsonClone);
+                ShowToast(LanguageManager.GetString("ui_Toast_ActionCopied"), isError: false);
+            }
+            catch { /* ignore */ }
+            return;
+        }
+
+        if (_actions.Count > 0)
+        {
+            try
+            {
+                _actionClipboard = JsonSerializer.Serialize<MacroAction>(_actions[^1], _jsonClone);
+                ShowToast(LanguageManager.GetString("ui_Toast_ActionCopied"), isError: false);
+            }
+            catch { /* ignore */ }
+        }
+    }
+
+    private void PasteAction()
+    {
+        if (string.IsNullOrEmpty(_actionClipboard)) return;
+        try
+        {
+            var action = JsonSerializer.Deserialize<MacroAction>(_actionClipboard, _jsonClone);
+            if (action is null) return;
+            PushUndo();
+            _actions.Add(action);
+            RebuildCanvas();
+            ShowToast(LanguageManager.GetString("ui_Toast_ActionPasted"), isError: false);
+        }
+        catch { /* ignore */ }
+    }
+
+    // ═══════════════════════════════════════════════════
+    //  KEYBOARD SHORTCUTS (Ctrl+Z/Y/C/V)
+    // ═══════════════════════════════════════════════════
+
+    protected override void OnPreviewKeyDown(KeyEventArgs e)
+    {
+        base.OnPreviewKeyDown(e);
+        if (_activeView != "MacroEditor") return;
+        if (e.OriginalSource is System.Windows.Controls.TextBox) return;
+
+        if (Keyboard.Modifiers == ModifierKeys.Control)
+        {
+            switch (e.Key)
+            {
+                case Key.Z:
+                    PerformUndo();
+                    e.Handled = true;
+                    break;
+                case Key.Y:
+                    PerformRedo();
+                    e.Handled = true;
+                    break;
+                case Key.C:
+                    CopySelectedAction();
+                    e.Handled = true;
+                    break;
+                case Key.V:
+                    PasteAction();
+                    e.Handled = true;
+                    break;
+            }
+        }
     }
 
     private MacroAction? FindMacroActionInWorkflowAncestors(DependencyObject? src)
@@ -2370,7 +2556,7 @@ public partial class MainWindow : Window
         rootStack.Children.Add(new Expander
         {
             Header = LanguageManager.GetString("ui_IfImage_ElseLabel"),
-            IsExpanded = false,
+            IsExpanded = img.ElseActions.Count > 0,
             Foreground = new SolidColorBrush(Color.FromRgb(220, 160, 160)),
             Margin = new Thickness(0, 4, 0, 0),
             Content = elseBorder,
@@ -2570,6 +2756,7 @@ public partial class MainWindow : Window
     private void BtnDeleteAction_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button btn) return;
+        PushUndo();
 
         switch (btn.Tag)
         {
@@ -2679,6 +2866,7 @@ public partial class MainWindow : Window
         if (dialog.ShowDialog() != true)
             return;
 
+        PushUndo();
         parentRepeat.LoopActions.Add(newAction);
         RebuildCanvas();
         AppendLog(string.Format(LanguageManager.GetString("ui_Log_AddedToLoop"), newAction.DisplayName));
@@ -2702,6 +2890,7 @@ public partial class MainWindow : Window
         if (dialog.ShowDialog() != true)
             return;
 
+        PushUndo();
         if (marker.IsTry)
             marker.Parent.TryActions.Add(newAction);
         else
@@ -2729,6 +2918,7 @@ public partial class MainWindow : Window
         if (dialog.ShowDialog() != true)
             return;
 
+        PushUndo();
         if (marker.IsThen)
             marker.Parent.ThenActions.Add(newAction);
         else
@@ -2756,6 +2946,7 @@ public partial class MainWindow : Window
         if (dialog.ShowDialog() != true)
             return;
 
+        PushUndo();
         if (marker.IsThen)
             marker.Parent.ThenActions.Add(newAction);
         else
@@ -2765,7 +2956,7 @@ public partial class MainWindow : Window
         AppendLog(string.Format(LanguageManager.GetString("ui_Log_AddedToThenElse"), newAction.DisplayName, marker.IsThen ? LanguageManager.GetString("ui_IfImage_ThenLabel") : LanguageManager.GetString("ui_IfImage_ElseLabel")));
     }
 
-    private void BtnClearCanvas_Click(object sender, RoutedEventArgs e) { _actions.Clear(); RebuildCanvas(); AppendLog("Canvas cleared."); }
+    private void BtnClearCanvas_Click(object sender, RoutedEventArgs e) { PushUndo(); _actions.Clear(); RebuildCanvas(); AppendLog("Canvas cleared."); }
 
     // ═══════════════════════════════════════════════════
     //  SAVE / LOAD
@@ -2845,10 +3036,15 @@ public partial class MainWindow : Window
                             }
                             var engine = new MacroEngine { HardwareMode = false };
                             engine.Log += msg => Dispatcher.Invoke(() => AppendLogWithMacroName(s.Name, msg));
+                            using var schedCts = new CancellationTokenSource();
                             try
                             {
-                                await engine.ExecuteScriptAsync(runScript, hwnd, CancellationToken.None);
+                                await engine.ExecuteScriptAsync(runScript, hwnd, schedCts.Token);
                                 AppendLog(string.Format(LanguageManager.GetString("ui_Log_SchedCompleted"), s.Name));
+                            }
+                            catch (OperationCanceledException)
+                            {
+                                AppendLog($"[Scheduler] {s.Name} cancelled.");
                             }
                             catch (Exception ex)
                             {
@@ -2941,7 +3137,7 @@ public partial class MainWindow : Window
         try
         {
             var script = await ScriptManager.LoadAsync(dlg.FileName);
-            if (script is null) { ShowToast("Failed to parse macro file.", isError: true); return; }
+            if (script is null) { ShowToast(LanguageManager.GetString("ui_Toast_ParseFailed"), isError: true); return; }
             _currentScript = script;
             string baseName = Path.GetFileNameWithoutExtension(dlg.FileName);
             if (string.IsNullOrWhiteSpace(_currentScript.Name) ||
@@ -3202,7 +3398,7 @@ public partial class MainWindow : Window
             if (!string.IsNullOrWhiteSpace(text))
                 hwnd = ResolveHwnd(text);
         }
-        if (hwnd == IntPtr.Zero) { ShowToast("Select a window first.", isError: true); return; }
+        if (hwnd == IntPtr.Zero) { ShowToast(LanguageManager.GetString("ui_Toast_SelectWindow"), isError: true); return; }
         Win32Api.IdentifyWindow(hwnd);
         AppendLog($"Identify → HWND=0x{hwnd:X} \"{Win32Api.GetWindowTitle(hwnd)}\"");
     }
@@ -3217,7 +3413,7 @@ public partial class MainWindow : Window
             if (!string.IsNullOrWhiteSpace(row.TargetWindow))
                 hwnd = ResolveHwnd(row.TargetWindow);
         }
-        if (hwnd == IntPtr.Zero) { ShowToast("Select a window first.", isError: true); return; }
+        if (hwnd == IntPtr.Zero) { ShowToast(LanguageManager.GetString("ui_Toast_SelectWindow"), isError: true); return; }
 
         row.TargetHwnd = hwnd;
         Win32Api.IdentifyWindow(hwnd);
@@ -3321,14 +3517,14 @@ public partial class MainWindow : Window
             }
 
             SyncUiToScript();
-            if (_actions.Count == 0) { ShowToast("No actions to run.", isError: true); Interlocked.Decrement(ref _macroStartCount); return; }
+            if (_actions.Count == 0) { ShowToast(LanguageManager.GetString("ui_Toast_NoActions"), isError: true); Interlocked.Decrement(ref _macroStartCount); return; }
             if (string.IsNullOrWhiteSpace(_currentScript.TargetWindowTitle) && _editorTargetHwnd == IntPtr.Zero)
-            { ShowToast("Set a Target Window Title.", isError: true); Interlocked.Decrement(ref _macroStartCount); return; }
+            { ShowToast(LanguageManager.GetString("ui_Toast_SetTargetWindow"), isError: true); Interlocked.Decrement(ref _macroStartCount); return; }
 
             IntPtr editorHwnd = (_editorTargetHwnd != IntPtr.Zero && Win32Api.IsWindow(_editorTargetHwnd))
                 ? _editorTargetHwnd
                 : ResolveHwnd(_currentScript.TargetWindowTitle);
-            if (editorHwnd == IntPtr.Zero) { ShowToast("Target window not found (even in hidden list).", isError: true); Interlocked.Decrement(ref _macroStartCount); return; }
+            if (editorHwnd == IntPtr.Zero) { ShowToast(LanguageManager.GetString("ui_Toast_TargetNotFound"), isError: true); Interlocked.Decrement(ref _macroStartCount); return; }
 
             SetRunningState(true);
             _cts = new CancellationTokenSource();
@@ -3339,7 +3535,7 @@ public partial class MainWindow : Window
                 TxtStatus.Text = $"{LanguageManager.GetString("ui_Status_Running")} [{idx}] {action.DisplayName}");
             _macroEngine.DataRowCompleted += (rowNum, total) => Dispatcher.Invoke(() =>
                 TxtStatus.Text = $"CSV Row {rowNum}/{total} done");
-            _macroEngine.ExecutionFinished += () => Dispatcher.Invoke(() => { _runsToday++; SetRunningState(false); ShowToast("Macro completed.", isError: false); UpdateProcessBar(); });
+            _macroEngine.ExecutionFinished += () => Dispatcher.Invoke(() => { _runsToday++; SetRunningState(false); ShowToast(LanguageManager.GetString("ui_Toast_MacroCompleted"), isError: false); UpdateProcessBar(); });
             _macroEngine.ExecutionFaulted += ex => Dispatcher.Invoke(() => { SetRunningState(false); ShowToast($"Error: {ex.Message}", isError: true); UpdateProcessBar(); });
 
             try
@@ -3391,7 +3587,7 @@ public partial class MainWindow : Window
         SyncUiToScript();
         string targetTitle = _currentScript.TargetWindowTitle;
         if (string.IsNullOrWhiteSpace(targetTitle) && _editorTargetHwnd == IntPtr.Zero)
-        { ShowToast("Set a Target Window Title before recording.", isError: true); SetActiveView("MacroEditor"); return; }
+        { ShowToast(LanguageManager.GetString("ui_Toast_SetTargetRecord"), isError: true); SetActiveView("MacroEditor"); return; }
         IntPtr hwnd = (_editorTargetHwnd != IntPtr.Zero && Win32Api.IsWindow(_editorTargetHwnd))
             ? _editorTargetHwnd
             : Win32Api.FindWindowByPartialTitle(targetTitle);
@@ -3434,7 +3630,8 @@ public partial class MainWindow : Window
     private void OnRecordingFinished(List<MacroAction> recorded)
     {
         WindowState = WindowState.Normal; Activate();
-        if (recorded.Count == 0) { ShowToast("No actions recorded.", isError: false); return; }
+        if (recorded.Count == 0) { ShowToast(LanguageManager.GetString("ui_Toast_NoRecorded"), isError: false); return; }
+        PushUndo();
         foreach (var a in recorded) _actions.Add(a);
         RebuildCanvas();
         SetActiveView("MacroEditor");

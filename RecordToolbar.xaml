@@ -41,7 +41,7 @@
                         VerticalAlignment="Center" />
 
                 <!-- Action count -->
-                <TextBlock x:Name="TxtActionCount" Text="0 actions" FontSize="12"
+                <TextBlock x:Name="TxtActionCount" Text="{DynamicResource ui_Record_ActionCount}" FontSize="12"
                            Foreground="#A6ADC8" VerticalAlignment="Center" Margin="0,0,16,0" />
 
                 <!-- Stop button -->

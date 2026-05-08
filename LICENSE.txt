@@ -1,0 +1,10 @@
+SmartMacroAI - Smart RPA Automation Tool
+Copyright (c) 2024-2026 Phạm Duy
+
+All rights reserved.
+
+This software is proprietary and confidential.
+Unauthorized copying, distribution, or modification of this software,
+via any medium, is strictly prohibited.
+
+Created by Phạm Duy – Giải pháp tự động hóa thông minh.

@@ -199,7 +199,7 @@
     <system:String x:Key="ui_MouseSettings_PreviewTitle">Xem trước đường đi</system:String>
     <system:String x:Key="ui_Toast_MouseSettingsSaved">Đã lưu cài đặt chuột.</system:String>
 
-    <system:String x:Key="ui_About_Tagline">v1.5.6 — Công cụ tự động RPA</system:String>
+    <system:String x:Key="ui_About_Tagline">v1.5.7 — Công cụ tự động RPA</system:String>
     <system:String x:Key="ui_About_Description">Tự động hóa không chiếm chuột/bàn phím vật lý trên Windows 10/11. Dùng Win32 API để gửi click và phím tới cửa sổ nền.</system:String>
     <system:String x:Key="ui_About_TechStack">Công nghệ</system:String>
     <system:String x:Key="ui_About_TechLine">.NET 8.0  |  WPF  |  Win32 API  |  Emgu.CV (OpenCV)  |  Tesseract OCR</system:String>
@@ -207,7 +207,7 @@
     <system:String x:Key="ui_About_Contact">Liên hệ hỗ trợ</system:String>
     <system:String x:Key="ui_About_CheckUpdates">🔄 Kiểm tra cập nhật</system:String>
     <system:String x:Key="ui_About_UpdatesTitle">Cập nhật phần mềm</system:String>
-    <system:String x:Key="ui_About_CurrentVersion">Phiên bản hiện tại: v1.5.6</system:String>
+    <system:String x:Key="ui_About_CurrentVersion">Phiên bản hiện tại: v1.5.7</system:String>
     <system:String x:Key="ui_Coffee_Title">☕ Mời cà phê</system:String>
     <system:String x:Key="ui_Coffee_Blurb">Mời tác giả một ly cà phê nếu phần mềm này giúp ích cho bạn!</system:String>
     <system:String x:Key="ui_Bank_Line">MB Bank — PHAM QUOC DUY — 379997999</system:String>
@@ -217,7 +217,7 @@
     <system:String x:Key="ui_LogConsole">NHẬT KÝ</system:String>
     <system:String x:Key="ui_Log_Clear">Xóa</system:String>
 
-    <system:String x:Key="ui_Footer_Runtime">SmartMacroAI v1.5.6</system:String>
+    <system:String x:Key="ui_Footer_Runtime">SmartMacroAI v1.5.7</system:String>
     <system:String x:Key="ui_Footer_DotNet">.NET 8.0</system:String>
     <system:String x:Key="ui_Footer_Sep"> | </system:String>
     <system:String x:Key="ui_Footer_Credit">Tác giả Phạm Duy - Giải pháp tự động hóa thông minh.</system:String>
@@ -271,6 +271,13 @@
     <system:String x:Key="ui_Drv_Feat2">Cần quyền Administrator (Windows sẽ hỏi 1 lần)</system:String>
     <system:String x:Key="ui_Drv_Feat3">Cần khởi động lại máy sau khi cài</system:String>
     <system:String x:Key="ui_Drv_Compat">Tương thích: MapleStory, PUBG, và các game có HackShield / EasyAntiCheat</system:String>
+    <system:String x:Key="ui_Drv_AmdNote">⚠️ Lưu ý chip AMD Ryzen: Nếu sau khi cài driver máy bị treo chuột/bàn phím, hãy khởi động vào Safe Mode và chạy lệnh: sc delete keyboard &amp; sc delete mouse — rồi restart lại. Hoặc bấm "Gỡ driver" trong Cài đặt.</system:String>
+    <system:String x:Key="ui_Drv_FreezeWarning">Phát hiện Interception driver có thể đang gây lỗi.
+Driver Level mode đã bị tắt tự động.
+
+Nếu chuột/bàn phím bị treo, vào Cài đặt → Driver → Gỡ driver.
+Người dùng AMD Ryzen: khởi động vào Safe Mode và chạy:
+sc delete keyboard &amp; sc delete mouse</system:String>
     <system:String x:Key="ui_Drv_LaterBtn">Để sau</system:String>
     <system:String x:Key="ui_Drv_InstallBtn">⚡ Cài đặt ngay</system:String>
 
@@ -965,6 +972,23 @@ Chi tiết lỗi:
     <!-- BehaviorRandomizer -->
     <system:String x:Key="ui_AntiLog_SessionBreak">[Anti-Detection] Nghỉ phiên ~{0} phút (mô hình người dùng).</system:String>
     <system:String x:Key="ui_AntiLog_EyeTracking">[Anti-Detection] Cuộn nhẹ trước khi nhấp (mô phỏng theo dõi mắt).</system:String>
+
+    <!-- Toast messages -->
+    <system:String x:Key="ui_Toast_NoActions">Không có action nào để chạy.</system:String>
+    <system:String x:Key="ui_Toast_SetTargetWindow">Hãy chọn cửa sổ mục tiêu.</system:String>
+    <system:String x:Key="ui_Toast_TargetNotFound">Không tìm thấy cửa sổ mục tiêu (kể cả trong danh sách ẩn).</system:String>
+    <system:String x:Key="ui_Toast_MacroCompleted">Macro hoàn tất.</system:String>
+    <system:String x:Key="ui_Toast_SetTargetRecord">Hãy chọn cửa sổ mục tiêu trước khi ghi.</system:String>
+    <system:String x:Key="ui_Toast_NoRecorded">Không ghi được action nào.</system:String>
+    <system:String x:Key="ui_Toast_ParseFailed">Không thể đọc file macro.</system:String>
+    <system:String x:Key="ui_Toast_SelectWindow">Hãy chọn cửa sổ trước.</system:String>
+    <system:String x:Key="ui_Toast_ActionCopied">Đã sao chép action.</system:String>
+    <system:String x:Key="ui_Toast_ActionPasted">Đã dán action.</system:String>
+    <system:String x:Key="ui_Toast_Undo">Hoàn tác.</system:String>
+    <system:String x:Key="ui_Toast_Redo">Làm lại.</system:String>
+
+    <!-- RecordToolbar -->
+    <system:String x:Key="ui_Record_ActionCount">{0} actions</system:String>
 
     <!-- LogWindow -->
     <system:String x:Key="ui_LogWin_Saved">Đã lưu log vào: {0}</system:String>

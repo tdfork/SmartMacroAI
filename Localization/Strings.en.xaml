@@ -199,7 +199,7 @@
     <system:String x:Key="ui_MouseSettings_PreviewTitle">Path preview</system:String>
     <system:String x:Key="ui_Toast_MouseSettingsSaved">Mouse settings saved.</system:String>
 
-    <system:String x:Key="ui_About_Tagline">v1.5.6 — RPA Automation Tool</system:String>
+    <system:String x:Key="ui_About_Tagline">v1.5.7 — RPA Automation Tool</system:String>
     <system:String x:Key="ui_About_Description">Non-invasive automation for Windows 10/11. Uses Win32 API to send clicks and keystrokes directly to background windows without hijacking your physical mouse or keyboard.</system:String>
     <system:String x:Key="ui_About_TechStack">Technology Stack</system:String>
     <system:String x:Key="ui_About_TechLine">.NET 8.0  |  WPF  |  Win32 API  |  Emgu.CV (OpenCV)  |  Tesseract OCR</system:String>
@@ -207,7 +207,7 @@
     <system:String x:Key="ui_About_Contact">Support contact</system:String>
     <system:String x:Key="ui_About_CheckUpdates">🔄 Check for updates</system:String>
     <system:String x:Key="ui_About_UpdatesTitle">Software updates</system:String>
-    <system:String x:Key="ui_About_CurrentVersion">Current version: v1.5.6</system:String>
+    <system:String x:Key="ui_About_CurrentVersion">Current version: v1.5.7</system:String>
     <system:String x:Key="ui_Coffee_Title">☕ Buy me a coffee</system:String>
     <system:String x:Key="ui_Coffee_Blurb">Treat the author to a coffee if this app helps you!</system:String>
     <system:String x:Key="ui_Bank_Line">MB Bank — PHAM QUOC DUY — 379997999</system:String>
@@ -217,7 +217,7 @@
     <system:String x:Key="ui_LogConsole">LOG CONSOLE</system:String>
     <system:String x:Key="ui_Log_Clear">Clear</system:String>
 
-    <system:String x:Key="ui_Footer_Runtime">SmartMacroAI v1.5.6</system:String>
+    <system:String x:Key="ui_Footer_Runtime">SmartMacroAI v1.5.7</system:String>
     <system:String x:Key="ui_Footer_DotNet">.NET 8.0</system:String>
     <system:String x:Key="ui_Footer_Sep"> | </system:String>
     <system:String x:Key="ui_Footer_Credit">Created by Phạm Duy - Giải pháp tự động hóa thông minh.</system:String>
@@ -271,6 +271,13 @@
     <system:String x:Key="ui_Drv_Feat2">Requires Administrator privileges (Windows will prompt once)</system:String>
     <system:String x:Key="ui_Drv_Feat3">Requires a system restart after installation</system:String>
     <system:String x:Key="ui_Drv_Compat">Compatible with: MapleStory, PUBG, and games using HackShield / EasyAntiCheat</system:String>
+    <system:String x:Key="ui_Drv_AmdNote">⚠️ AMD Ryzen note: If mouse/keyboard freezes after driver install, boot into Safe Mode and run: sc delete keyboard &amp; sc delete mouse — then restart. Or click "Uninstall Driver" in Settings.</system:String>
+    <system:String x:Key="ui_Drv_FreezeWarning">Interception driver may be causing input freeze.
+Driver Level mode has been disabled automatically.
+
+If mouse/keyboard is frozen, go to Settings → Driver → Uninstall driver.
+AMD Ryzen users: boot into Safe Mode and run:
+sc delete keyboard &amp; sc delete mouse</system:String>
     <system:String x:Key="ui_Drv_LaterBtn">Later</system:String>
     <system:String x:Key="ui_Drv_InstallBtn">Install Now</system:String>
 
@@ -965,6 +972,23 @@ Error details:
     <!-- BehaviorRandomizer -->
     <system:String x:Key="ui_AntiLog_SessionBreak">[Anti-Detection] Session break ~{0} min (human model).</system:String>
     <system:String x:Key="ui_AntiLog_EyeTracking">[Anti-Detection] Light scroll before click (eye-tracking simulation).</system:String>
+
+    <!-- Toast messages -->
+    <system:String x:Key="ui_Toast_NoActions">No actions to run.</system:String>
+    <system:String x:Key="ui_Toast_SetTargetWindow">Set a Target Window Title.</system:String>
+    <system:String x:Key="ui_Toast_TargetNotFound">Target window not found (even in hidden list).</system:String>
+    <system:String x:Key="ui_Toast_MacroCompleted">Macro completed.</system:String>
+    <system:String x:Key="ui_Toast_SetTargetRecord">Set a Target Window Title before recording.</system:String>
+    <system:String x:Key="ui_Toast_NoRecorded">No actions recorded.</system:String>
+    <system:String x:Key="ui_Toast_ParseFailed">Failed to parse macro file.</system:String>
+    <system:String x:Key="ui_Toast_SelectWindow">Select a window first.</system:String>
+    <system:String x:Key="ui_Toast_ActionCopied">Action copied.</system:String>
+    <system:String x:Key="ui_Toast_ActionPasted">Action pasted.</system:String>
+    <system:String x:Key="ui_Toast_Undo">Undo.</system:String>
+    <system:String x:Key="ui_Toast_Redo">Redo.</system:String>
+
+    <!-- RecordToolbar -->
+    <system:String x:Key="ui_Record_ActionCount">{0} actions</system:String>
 
     <!-- LogWindow -->
     <system:String x:Key="ui_LogWin_Saved">Log saved to: {0}</system:String>

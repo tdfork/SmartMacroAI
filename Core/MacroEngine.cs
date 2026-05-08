@@ -1406,8 +1406,20 @@ public sealed class MacroEngine
             }
             try
             {
+                // Auto-focus: bring target window to foreground so SendInput reaches it
+                IntPtr prevFg = GetForegroundWindow();
+                if (prevFg != hwnd)
+                {
+                    SetForegroundWindow(hwnd);
+                    BringWindowToTop(hwnd);
+                    await Task.Delay(50, token);
+                }
+
                 var pt = new POINT { X = click.X, Y = click.Y };
                 ClientToScreen(hwnd, ref pt);
+
+                SetCursorPos(pt.X, pt.Y);
+                await Task.Delay(10, token);
 
                 int screenW = GetSystemMetrics(0);
                 int screenH = GetSystemMetrics(1);
@@ -1430,10 +1442,13 @@ public sealed class MacroEngine
                 {
                     new INPUT { type = INPUT_MOUSE, u = new INPUTUNION { mi = new MOUSEINPUT { dx = absX, dy = absY, dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESKTOP } } },
                     new INPUT { type = INPUT_MOUSE, u = new INPUTUNION { mi = new MOUSEINPUT { dwFlags = rawDown } } },
-                    new INPUT { type = INPUT_MOUSE, u = new INPUTUNION { mi = new MOUSEINPUT { dwFlags = rawUp } } }
                 };
-                SendInput(3, inputs, Marshal.SizeOf<INPUT>());
-                Log?.Invoke($"[Click/Raw] ({click.X},{click.Y})");
+                SendInput(2, inputs, Marshal.SizeOf<INPUT>());
+                await Task.Delay(20, token);
+                var inputUp = new[] { new INPUT { type = INPUT_MOUSE, u = new INPUTUNION { mi = new MOUSEINPUT { dwFlags = rawUp } } } };
+                SendInput(1, inputUp, Marshal.SizeOf<INPUT>());
+
+                Log?.Invoke($"[Click/Raw] ({click.X},{click.Y}) → screen ({pt.X},{pt.Y})");
             }
             finally { _osResourceLock.Release(); }
             return;
@@ -1492,27 +1507,32 @@ public sealed class MacroEngine
         }
 
         // ── STEALTH MODE (default): PostMessage — no cursor hijack, runs in background ─
+        // DirectX fix: send WM_ACTIVATE to ensure the window processes input messages
+        Win32Api.PostMessage(hwnd, Win32Api.WM_ACTIVATE, (IntPtr)Win32Api.WA_ACTIVE, IntPtr.Zero);
+        await Task.Delay(10, token);
+
         IntPtr lParam = Win32Api.MakeLParam(click.X, click.Y);
         Win32Api.PostMessage(hwnd, Win32Api.WM_MOUSEMOVE, IntPtr.Zero, lParam);
-        await Task.Delay(20, token);
+        await Task.Delay(5, token);
+
         if (click.Button == MouseButton.Right)
         {
             Win32Api.PostMessage(hwnd, Win32Api.WM_RBUTTONDOWN, (IntPtr)Win32Api.MK_RBUTTON, lParam);
-            await Task.Delay(50, token);
+            await Task.Delay(20, token);
             Win32Api.PostMessage(hwnd, Win32Api.WM_RBUTTONUP, IntPtr.Zero, lParam);
             Log?.Invoke($"[Click/Stealth] ({click.X},{click.Y}) right-click");
         }
         else if (click.Button == MouseButton.Middle)
         {
             Win32Api.PostMessage(hwnd, Win32Api.WM_MBUTTONDOWN, (IntPtr)Win32Api.MK_MBUTTON, lParam);
-            await Task.Delay(50, token);
+            await Task.Delay(20, token);
             Win32Api.PostMessage(hwnd, Win32Api.WM_MBUTTONUP, IntPtr.Zero, lParam);
             Log?.Invoke($"[Click/Stealth] ({click.X},{click.Y}) middle-click");
         }
         else
         {
             Win32Api.PostMessage(hwnd, Win32Api.WM_LBUTTONDOWN, (IntPtr)Win32Api.MK_LBUTTON, lParam);
-            await Task.Delay(50, token);
+            await Task.Delay(20, token);
             Win32Api.PostMessage(hwnd, Win32Api.WM_LBUTTONUP, IntPtr.Zero, lParam);
             Log?.Invoke($"[Click/Stealth] ({click.X},{click.Y})");
         }
@@ -2287,9 +2307,14 @@ public sealed class MacroEngine
         if (!kpa.Modifiers.Shift && !kpa.Modifiers.Alt)
         {
             IntPtr child = GetFocusedChildForTarget(hwnd);
+
+            // DirectX fix: activate window so it processes input from PostMessage
+            Win32Api.PostMessage(hwnd, Win32Api.WM_ACTIVATE, (IntPtr)Win32Api.WA_ACTIVE, IntPtr.Zero);
+            await Task.Delay(5, token);
+
             uint scan = MapVirtualKey((uint)vk, 0);
-            IntPtr lpDn = (IntPtr)((scan << 16) | 1);
-            IntPtr lpUp = (IntPtr)((scan << 16) | 0xC0000001);
+            IntPtr lpDn = (IntPtr)(1 | (scan << 16));
+            IntPtr lpUp = (IntPtr)(1 | (scan << 16) | (1 << 30) | unchecked((int)(1u << 31)));
 
             if (kpa.Modifiers.Ctrl)
             {
@@ -2297,7 +2322,7 @@ public sealed class MacroEngine
                 await Task.Delay(15, token);
             }
             PostMessage(child, WM_KEYDOWN, (IntPtr)vk, lpDn);
-            await Task.Delay(Math.Max(hold, 20), token);
+            await Task.Delay(Math.Max(hold, 30), token);
             PostMessage(child, WM_KEYUP, (IntPtr)vk, lpUp);
             if (kpa.Modifiers.Ctrl)
             {
@@ -3018,6 +3043,9 @@ public sealed class MacroEngine
 
     [DllImport("user32.dll")]
     private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    private static extern bool BringWindowToTop(IntPtr hWnd);
 
     [DllImport("user32.dll")]
     private static extern IntPtr GetForegroundWindow();

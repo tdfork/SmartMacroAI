@@ -9,6 +9,8 @@ namespace SmartMacroAI;
 
 public partial class App : Application
 {
+    public static bool DriverLevelEnabled { get; set; } = true;
+
     protected override void OnStartup(StartupEventArgs e)
     {
         // CATCH ALL unhandled exceptions and show them
@@ -39,18 +41,8 @@ public partial class App : Application
             LanguageManager.ApplySavedLanguage();
             System.Diagnostics.Debug.WriteLine($"[Startup] Language applied: {LanguageManager.CurrentLanguage}");
 
-            // BƯỚC 2: Initialize Interception driver if DLL + driver already installed
-            try
-            {
-                if (InterceptionInstaller.IsReady())
-                {
-                    bool ok = InterceptionService.Instance.Initialize();
-                    System.Diagnostics.Debug.WriteLine(ok
-                        ? "[Startup] ✅ Interception ready"
-                        : "[Startup] ⚠️ Driver file present but init failed — using Raw mode");
-                }
-            }
-            catch { }
+            // BƯỚC 2: Safe-check Interception driver (timeout protection for Ryzen/AMD freeze)
+            SafeCheckInterceptionDriver();
 
             // BƯỚC 3: Tạo và hiển thị MainWindow SAU KHI language đã apply
             base.OnStartup(e);
@@ -62,6 +54,61 @@ public partial class App : Application
             try { File.WriteAllText("crash.log", $"[{DateTime.Now}] ONSTARTUP CRASH:\n{ex}"); } catch { }
             MessageBox.Show($"{LanguageManager.GetString("ui_Msg_OnStartupError")}\n\n{ex.Message}\n\n{ex.StackTrace}", "SmartMacroAI — Startup Error", MessageBoxButton.OK, MessageBoxImage.Error);
             Shutdown();
+        }
+    }
+
+    private void SafeCheckInterceptionDriver()
+    {
+        try
+        {
+            if (!InterceptionInstaller.IsReady())
+            {
+                DriverLevelEnabled = false;
+                return;
+            }
+
+            using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(2));
+            bool initOk = false;
+            try
+            {
+                initOk = Task.Run(() =>
+                {
+                    try
+                    {
+                        return InterceptionService.Instance.Initialize();
+                    }
+                    catch { return false; }
+                }, cts.Token).GetAwaiter().GetResult();
+            }
+            catch (OperationCanceledException)
+            {
+                System.Diagnostics.Debug.WriteLine("[Driver] ⚠️ Interception timeout (2s) — possible input freeze");
+                DriverLevelEnabled = false;
+                Dispatcher.Invoke(() =>
+                {
+                    MessageBox.Show(
+                        LanguageManager.GetString("ui_Drv_FreezeWarning"),
+                        "⚠️ Driver Warning",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                });
+                return;
+            }
+
+            if (initOk)
+            {
+                DriverLevelEnabled = true;
+                System.Diagnostics.Debug.WriteLine("[Startup] ✅ Interception ready");
+            }
+            else
+            {
+                DriverLevelEnabled = false;
+                System.Diagnostics.Debug.WriteLine("[Startup] ⚠️ Driver file present but init failed — using Raw mode");
+            }
+        }
+        catch
+        {
+            DriverLevelEnabled = false;
         }
     }
 

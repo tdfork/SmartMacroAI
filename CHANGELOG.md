@@ -5,6 +5,30 @@ All notable changes to SmartMacroAI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.7] - 2026-05-08
+
+### Added
+- Undo/Redo system (Ctrl+Z / Ctrl+Y) in macro editor with 50-state stack
+- Copy/Paste actions (Ctrl+C / Ctrl+V) via JSON serialization
+- Keyboard shortcuts: OnPreviewKeyDown handler for editor commands
+- Self-contained single-file publish with compression (255 MB exe)
+- Inno Setup installer script with optional Playwright component
+- LICENSE.txt for distribution
+
+### Fixed
+- GDI resource leak in `ScreenshotHelper.CaptureWindow` — proper try/finally cleanup
+- `CancellationTokenSource` leak in `App.SafeCheckInterceptionDriver`
+- `Drawing.Bitmap` not disposed in `MainWindow.CreateFallbackTrayIcon`
+- Scheduler macro runs now use dedicated `CancellationToken` (was `CancellationToken.None`)
+- DLL whitelist expanded with 30+ entries — eliminates false WPF runtime warnings
+- 9 hardcoded English strings in ShowToast calls replaced with localized versions
+- 3 XAML placeholder texts converted to DynamicResource bindings
+
+### Changed
+- Version bumped to 1.5.7 across all assemblies and UI strings
+- Localization keys increased to 826 (EN + VI perfectly synchronized)
+- Release build: 0 errors, 0 warnings in both Debug and Release configurations
+
 ## [1.5.6] - 2026-05-06
 
 ### Added

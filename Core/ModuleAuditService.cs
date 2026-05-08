@@ -108,8 +108,52 @@ public sealed class ModuleAuditService
     public static bool IsModuleSafe(ProcessModule module) =>
         ClassifyModule(module) != ModuleCategory.Unknown;
 
+    private static readonly HashSet<string> _knownSafeDlls = new(StringComparer.OrdinalIgnoreCase)
+    {
+        // WPF Runtime native DLLs
+        "wpfgfx_cor3.dll",
+        "wpfgfx_cor3_x86.dll",
+        "D3DCompiler_47_cor3.dll",
+        "PresentationNative_cor3.dll",
+        "PenImc_cor3.dll",
+        "vcruntime140_cor3.dll",
+
+        // .NET Runtime
+        "coreclr.dll",
+        "clrjit.dll",
+        "hostpolicy.dll",
+        "hostfxr.dll",
+
+        // DirectX / graphics system
+        "d3d11.dll",
+        "d3d9.dll",
+        "d3d10warp.dll",
+        "dxgi.dll",
+        "D3DCompiler_47.dll",
+        "dcomp.dll",
+        "dwmapi.dll",
+
+        // Windows system
+        "ntdll.dll",
+        "kernel32.dll",
+        "user32.dll",
+        "gdi32.dll",
+        "advapi32.dll",
+        "ole32.dll",
+        "comctl32.dll",
+        "shell32.dll",
+        "msvcrt.dll",
+        "ucrtbase.dll",
+        "vcruntime140.dll",
+        "msvcp140.dll",
+
+        // Interception (app's own driver DLL)
+        "interception.dll",
+    };
+
     /// <summary>
     /// Tier 1: under Windows directory. Tier 2: under Program Files\dotnet. Tier 3: known framework file name prefix.
+    /// Tier 4: exact filename whitelist for WPF/DirectX native DLLs.
     /// App binaries under <see cref="AppDomain.CurrentDomain.BaseDirectory"/> are <see cref="ModuleCategory.AppLocal"/>.
     /// </summary>
     public static ModuleCategory ClassifyModule(ProcessModule module)
@@ -171,6 +215,10 @@ public sealed class ModuleAuditService
         if (fileName.Length == 0)
             return ModuleCategory.Unknown;
 
+        // Tier 4: exact filename whitelist (WPF native, DirectX, system DLLs)
+        if (_knownSafeDlls.Contains(fileName))
+            return ModuleCategory.KnownFramework;
+
         ReadOnlySpan<string> prefixes =
         [
             "System.",
@@ -181,6 +229,10 @@ public sealed class ModuleAuditService
             "DirectWrite",
             "clr",
             "mscor",
+            "wpfgfx",
+            "D3D",
+            "api-ms-",
+            "vcruntime",
         ];
 
         foreach (string p in prefixes)
