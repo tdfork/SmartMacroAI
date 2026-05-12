@@ -40,13 +40,39 @@ public static class VisionEngine
 
     private static Mat LoadTemplate(string path)
     {
-        if (_templateCache.TryGetValue(path, out var cached))
+        if (_templateCache.TryGetValue(path, out var cached) && cached != null && !cached.IsEmpty)
             return cached;
 
-        var template = CvInvoke.Imread(path, ImreadModes.ColorBgr);
+        // CvInvoke.Imread may fail with Unicode paths — use byte[] fallback
+        Mat template;
+        try
+        {
+            template = CvInvoke.Imread(path, ImreadModes.ColorBgr);
+        }
+        catch
+        {
+            template = new Mat();
+        }
+
+        // Fallback: if Imread failed (empty Mat), try loading via .NET then decode
+        if (template == null || template.IsEmpty)
+        {
+            try
+            {
+                byte[] bytes = File.ReadAllBytes(path);
+                template = new Mat();
+                CvInvoke.Imdecode(bytes, ImreadModes.ColorBgr, template);
+            }
+            catch
+            {
+                return new Mat(); // Return empty mat — caller will handle
+            }
+        }
+
         if (template != null && !template.IsEmpty)
             _templateCache[path] = template;
-        return template!;
+
+        return template ?? new Mat();
     }
 
     /// <summary>
@@ -238,6 +264,9 @@ public static class VisionEngine
         using Mat sourceMat = BitmapToMat(source);
         Mat templateMat = LoadTemplate(templatePath);
 
+        if (templateMat == null || templateMat.IsEmpty)
+            return null;
+
         var best = MatchTemplateMultiScaleCore(sourceMat, templateMat, scales, searchRegion);
         if (best is null)
             return null;
@@ -292,6 +321,9 @@ public static class VisionEngine
         using Bitmap captured = CaptureHiddenWindow(hwnd);
         using Mat sourceMat = BitmapToMat(captured);
         Mat templateMat = LoadTemplate(templatePath);
+
+        if (templateMat == null || templateMat.IsEmpty)
+            return null;
 
         var best = MatchTemplateMultiScaleCore(sourceMat, templateMat, BuildScalesFromSettings(), searchRegion);
         if (best is null)

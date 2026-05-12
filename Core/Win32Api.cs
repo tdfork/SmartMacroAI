@@ -720,52 +720,83 @@ public static class Win32Api
         if (hwnd == IntPtr.Zero || !IsWindow(hwnd))
             return null;
 
-        SendMessage(hwnd, WM_CAPTURE_SPEC_WAKE, IntPtr.Zero, IntPtr.Zero);
+        // If window is off-screen (stealth mode for Chromium), temporarily move it back
+        // so PrintWindow can capture actual content instead of a black frame
+        bool wasOffScreen = GetProp(hwnd, "SmartMacro_OrigX") != IntPtr.Zero;
+        int restoreX = 0, restoreY = 0, restoreW = 0, restoreH = 0;
 
-        if (!GetClientRect(hwnd, out RECT rect))
-            return null;
-
-        int width  = rect.Right - rect.Left;
-        int height = rect.Bottom - rect.Top;
-
-        bool iconicOrZero = IsIconic(hwnd) || width <= 0 || height <= 0;
-        if (iconicOrZero)
+        if (wasOffScreen)
         {
-            ShowWindow(hwnd, SW_RESTORE);
-            Thread.Sleep(300);
-            if (!GetClientRect(hwnd, out rect))
+            restoreX = (int)GetProp(hwnd, "SmartMacro_OrigX") - 1;
+            restoreY = (int)GetProp(hwnd, "SmartMacro_OrigY") - 1;
+            restoreW = (int)GetProp(hwnd, "SmartMacro_OrigW");
+            restoreH = (int)GetProp(hwnd, "SmartMacro_OrigH");
+            if (restoreW > 0 && restoreH > 0)
+            {
+                SetWindowPos(hwnd, IntPtr.Zero, restoreX, restoreY, restoreW, restoreH,
+                    SWP_NOZORDER | SWP_NOACTIVATE);
+                Thread.Sleep(50); // Give Chromium time to render
+            }
+        }
+
+        try
+        {
+            SendMessage(hwnd, WM_CAPTURE_SPEC_WAKE, IntPtr.Zero, IntPtr.Zero);
+
+            if (!GetClientRect(hwnd, out RECT rect))
                 return null;
-            width  = rect.Right - rect.Left;
-            height = rect.Bottom - rect.Top;
-        }
 
-        if (width <= 0 || height <= 0)
-            return null;
+            int width  = rect.Right - rect.Left;
+            int height = rect.Bottom - rect.Top;
 
-        var bmp = new Bitmap(width, height, PixelFormat.Format32bppArgb);
-        using (var g = Graphics.FromImage(bmp))
-        {
-            IntPtr hdc = g.GetHdc();
-            try
+            bool iconicOrZero = IsIconic(hwnd) || width <= 0 || height <= 0;
+            if (iconicOrZero)
             {
-                // PW_RENDERFULLCONTENT = 0x00000002
-                bool success = PrintWindow(hwnd, hdc, 0x00000002);
-                if (!success)
-                    PrintWindow(hwnd, hdc, 0x00000003); // PW_CLIENTONLY | PW_RENDERFULLCONTENT
+                ShowWindow(hwnd, SW_RESTORE);
+                Thread.Sleep(300);
+                if (!GetClientRect(hwnd, out rect))
+                    return null;
+                width  = rect.Right - rect.Left;
+                height = rect.Bottom - rect.Top;
             }
-            finally
+
+            if (width <= 0 || height <= 0)
+                return null;
+
+            var bmp = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+            using (var g = Graphics.FromImage(bmp))
             {
-                g.ReleaseHdc(hdc);
+                IntPtr hdc = g.GetHdc();
+                try
+                {
+                    // PW_RENDERFULLCONTENT = 0x00000002
+                    bool success = PrintWindow(hwnd, hdc, 0x00000002);
+                    if (!success)
+                        PrintWindow(hwnd, hdc, 0x00000003); // PW_CLIENTONLY | PW_RENDERFULLCONTENT
+                }
+                finally
+                {
+                    g.ReleaseHdc(hdc);
+                }
+            }
+
+            if (IsBlackBitmap(bmp))
+            {
+                bmp.Dispose();
+                return CaptureWindowBitBlt(hwnd, width, height);
+            }
+
+            return bmp;
+        }
+        finally
+        {
+            // Move window back off-screen if it was in stealth mode
+            if (wasOffScreen && restoreW > 0)
+            {
+                SetWindowPos(hwnd, IntPtr.Zero, -32000, -32000, restoreW, restoreH,
+                    SWP_NOZORDER | SWP_NOACTIVATE);
             }
         }
-
-        if (IsBlackBitmap(bmp))
-        {
-            bmp.Dispose();
-            return CaptureWindowBitBlt(hwnd, width, height);
-        }
-
-        return bmp;
     }
 
     /// <summary>BitBlt fallback when <see cref="CaptureHiddenWindow"/> yields a black <c>PrintWindow</c> frame.</summary>
