@@ -65,21 +65,21 @@ public partial class TemplatePickerDialog : Window
     private void SelectTemplate(MacroTemplate template)
     {
         SelectedTemplate = template;
-        if (System.Windows.Interop.ComponentDispatcher.IsThreadModal) DialogResult = true;
+        try { DialogResult = true; } catch { Close(); return; }
         Close();
     }
 
     private void BlankMacro_Click(object sender, RoutedEventArgs e)
     {
         SelectedTemplate = null;
-        if (System.Windows.Interop.ComponentDispatcher.IsThreadModal) DialogResult = false;
+        try { DialogResult = false; } catch { Close(); return; }
         Close();
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e)
     {
         SelectedTemplate = null;
-        if (System.Windows.Interop.ComponentDispatcher.IsThreadModal) DialogResult = false;
+        try { DialogResult = false; } catch { Close(); return; }
         Close();
     }
 }
