@@ -542,12 +542,13 @@ public sealed class MacroEngine
                 OnLog($"[StackTrace] {ex.StackTrace}");
 
                 // Capture error screenshot
+                string? errorScreenshotPath = null;
                 try
                 {
-                    string? screenshotPath = _errorScreenshotService.CaptureOnError(
+                    errorScreenshotPath = _errorScreenshotService.CaptureOnError(
                         _runtimeTargetHwnd, script.Name, ex.Message, _totalRowsDone);
-                    if (screenshotPath != null)
-                        OnLog($"[Screenshot] Error captured: {screenshotPath}");
+                    if (errorScreenshotPath != null)
+                        OnLog($"[Screenshot] Error captured: {errorScreenshotPath}");
                 }
                 catch (Exception ssEx)
                 {
@@ -563,6 +564,7 @@ public sealed class MacroEngine
                     _currentRunRecord.EndTime = DateTime.Now;
                     _currentRunRecord.Success = false;
                     _currentRunRecord.ErrorMessage = ex.Message;
+                    _currentRunRecord.ScreenshotPath = errorScreenshotPath;
                     _currentRunRecord.CompletedSteps = _totalRowsDone;
                     _runHistoryService.Save(_currentRunRecord);
                     NotificationService.Instance.PushError(

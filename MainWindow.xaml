@@ -560,6 +560,7 @@
                             <DockPanel>
                                 <DockPanel DockPanel.Dock="Top" Margin="8,8,8,6">
                                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                        <Button Content="▶▶ Run All" Click="BtnRunAllParallel_Click" Padding="12,6" FontSize="11" Margin="0,0,6,0" Background="#A6E3A1" Foreground="#1E1E2E" BorderThickness="0" Cursor="Hand" FontWeight="SemiBold" ToolTip="Chạy macro trên tất cả cửa sổ đã chọn (song song)" />
                                         <Button Style="{StaticResource DangerButtonStyle}" Content="{DynamicResource ui_StopAll}" Click="BtnStopAllMacros_Click" Padding="12,6" FontSize="11" Margin="0,0,6,0" />
                                         <Button Click="BtnGlobalHistory_Click" Padding="12,6" FontSize="11" Margin="0,0,6,0" Background="#45475A" Foreground="#CDD6F4" BorderThickness="0" Cursor="Hand">
                                             <StackPanel Orientation="Horizontal">
@@ -1499,6 +1500,15 @@
                                         <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource SubtextBrush}" Text="{DynamicResource ui_Settings_TrayBlurb}" />
                                     </StackPanel>
                                 </Border>
+
+                                <!-- Tutorial -->
+                                <Border Style="{StaticResource CardStyle}" Padding="20" Margin="0,12,0,0">
+                                    <StackPanel>
+                                        <TextBlock Text="{DynamicResource ui_Settings_TutorialTitle}" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Margin="0,0,0,8" />
+                                        <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource SubtextBrush}" Text="{DynamicResource ui_Settings_TutorialBlurb}" Margin="0,0,0,12" />
+                                        <Button Style="{StaticResource PrimaryButtonStyle}" Content="{DynamicResource ui_Settings_RestartTutorial}" Click="BtnRestartTutorial_Click" Padding="20,10" HorizontalAlignment="Left" />
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
                         </ScrollViewer>
                             </TabItem>
@@ -1967,6 +1977,10 @@
                 </TextBlock>
             </DockPanel>
         </Border>
+
+        <!-- Tutorial Overlay (shown on first run) -->
+        <local:TutorialOverlay x:Name="TutorialOverlayControl" Grid.ColumnSpan="2" Grid.RowSpan="2"
+                               Panel.ZIndex="9999"/>
 
     </Grid>
 </Window>

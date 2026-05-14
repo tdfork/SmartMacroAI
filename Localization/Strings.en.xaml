@@ -163,6 +163,12 @@
     <system:String x:Key="ui_SaveHotkeys">Save Hotkeys</system:String>
     <system:String x:Key="ui_Settings_SystemTray">System Tray</system:String>
     <system:String x:Key="ui_Settings_TrayBlurb">When hidden via hotkey, the app minimizes to the system tray. Double-click the tray icon or press the hotkey to show it again. Right-click for the emergency menu.</system:String>
+    <system:String x:Key="ui_Settings_TutorialTitle">Tutorial</system:String>
+    <system:String x:Key="ui_Settings_TutorialBlurb">Review the step-by-step guide for beginners.</system:String>
+    <system:String x:Key="ui_Settings_RestartTutorial">🔄 Restart Tutorial</system:String>
+    <system:String x:Key="ui_Tutorial_Skip">Skip</system:String>
+    <system:String x:Key="ui_Tutorial_Next">Next →</system:String>
+    <system:String x:Key="ui_Tutorial_Finish">Finish ✓</system:String>
     <system:String x:Key="ui_Settings_Language">Language / Ngôn ngữ</system:String>
     <system:String x:Key="ui_Settings_VisionScaleTitle">Image recognition — template scale range</system:String>
     <system:String x:Key="ui_Settings_VisionScaleNote">Adjust if template matching fails on displays with unusual DPI scaling (e.g. 125%, 150%). Macros use multiple scales between min and max.</system:String>

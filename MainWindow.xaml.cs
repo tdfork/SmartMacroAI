@@ -159,6 +159,9 @@ public partial class MainWindow : Window
 
             // Load dashboard after window is fully rendered
             Dispatcher.InvokeAsync(LoadDashboard, System.Windows.Threading.DispatcherPriority.Background);
+
+            // Show tutorial for first-time users
+            Dispatcher.InvokeAsync(() => TutorialOverlayControl.TryShow(), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
         }
         catch (Exception ex)
         {
@@ -1470,6 +1473,12 @@ public partial class MainWindow : Window
         ShowToast(string.Format(LanguageManager.GetString("ui_Toast_HotkeysSavedFmt"), _hotkeySettings.ToggleAppDisplay, _hotkeySettings.ToggleTargetDisplay), isError: false);
     }
 
+    private void BtnRestartTutorial_Click(object sender, RoutedEventArgs e)
+    {
+        TutorialOverlayControl.ForceShow();
+        ShowToast("Tutorial đã được khởi động lại!", isError: false);
+    }
+
     // ═══════════════════════════════════════════════════
     //  DASHBOARD — MULTI-TASKING HUB (DataGrid)
     // ═══════════════════════════════════════════════════
@@ -1703,7 +1712,62 @@ public partial class MainWindow : Window
         foreach (var row in _dashboardRows)
             row.Runner.Stop();
         _cts?.Cancel();
+        _parallelExecutor?.StopAllAsync();
         AppendLog(LanguageManager.GetString("ui_Log_StopAll"));
+    }
+
+    // ── Parallel Executor ──
+    private ParallelExecutor? _parallelExecutor;
+
+    private void BtnRunAllParallel_Click(object sender, RoutedEventArgs e)
+    {
+        // Collect all dashboard rows that have a valid target window and are not already running
+        var eligibleRows = _dashboardRows
+            .Where(r => !r.IsRunning && !string.IsNullOrWhiteSpace(r.TargetWindow))
+            .ToList();
+
+        if (eligibleRows.Count == 0)
+        {
+            ShowToast("Không có macro nào sẵn sàng để chạy song song.", isError: true);
+            return;
+        }
+
+        // Resolve HWNDs for each row
+        var targets = new List<(MacroScript Script, IntPtr Hwnd)>();
+        foreach (var row in eligibleRows)
+        {
+            IntPtr hwnd = row.TargetHwnd != IntPtr.Zero && Win32Api.IsWindow(row.TargetHwnd)
+                ? row.TargetHwnd
+                : Win32Api.FindWindowByPartialTitle(row.TargetWindow);
+
+            if (hwnd == IntPtr.Zero) continue;
+            if (row.Script is null) continue;
+
+            targets.Add((row.Script, hwnd));
+        }
+
+        if (targets.Count == 0)
+        {
+            ShowToast("Không tìm thấy cửa sổ mục tiêu nào.", isError: true);
+            return;
+        }
+
+        _parallelExecutor ??= new ParallelExecutor();
+        _parallelExecutor.InstanceLog += (id, msg) => Dispatcher.Invoke(() => AppendLog($"[Parallel/{id[..8]}] {msg}"));
+        _parallelExecutor.StatusChanged += (id, status) => Dispatcher.Invoke(() =>
+        {
+            AppendLog($"[Parallel] {id[..8]}: {status}");
+            UpdateProcessBar();
+        });
+
+        // Use the first script as the template for all (common use case: same macro, multiple windows)
+        var script = targets[0].Script;
+        var hwnds = targets.Select(t => t.Hwnd).ToList();
+
+        int started = _parallelExecutor.RunAll(script, hwnds);
+        AppendLog($"[Parallel] Started {started} instance(s) on {hwnds.Count} window(s)");
+        ShowToast($"Đã chạy {started} macro song song!", isError: false);
+        UpdateProcessBar();
     }
 
     // ═══════════════════════════════════════════════════

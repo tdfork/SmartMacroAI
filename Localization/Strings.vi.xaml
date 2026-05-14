@@ -163,6 +163,12 @@
     <system:String x:Key="ui_SaveHotkeys">Lưu phím tắt</system:String>
     <system:String x:Key="ui_Settings_SystemTray">Khay hệ thống</system:String>
     <system:String x:Key="ui_Settings_TrayBlurb">Khi ẩn bằng hotkey, ứng dụng thu nhỏ vào khay hệ thống. Nhấp đúp biểu tượng hoặc nhấn phím tắt để hiện lại. Chuột phải để xem menu khẩn cấp.</system:String>
+    <system:String x:Key="ui_Settings_TutorialTitle">Hướng dẫn sử dụng</system:String>
+    <system:String x:Key="ui_Settings_TutorialBlurb">Xem lại hướng dẫn từng bước cho người mới bắt đầu.</system:String>
+    <system:String x:Key="ui_Settings_RestartTutorial">🔄 Xem lại hướng dẫn</system:String>
+    <system:String x:Key="ui_Tutorial_Skip">Bỏ qua</system:String>
+    <system:String x:Key="ui_Tutorial_Next">Tiếp theo →</system:String>
+    <system:String x:Key="ui_Tutorial_Finish">Hoàn tất ✓</system:String>
     <system:String x:Key="ui_Settings_Language">Ngôn ngữ / Language</system:String>
     <system:String x:Key="ui_Settings_VisionScaleTitle">Nhận dạng ảnh — khoảng tỷ lệ mẫu</system:String>
     <system:String x:Key="ui_Settings_VisionScaleNote">Chỉnh nếu khớp mẫu kém trên màn hình DPI lạ (125%, 150%, …). Macro thử nhiều tỷ lệ giữa min và max.</system:String>
