@@ -268,6 +268,9 @@ public sealed class MacroEngine
     /// <summary>Run history service for recording macro execution results.</summary>
     private readonly RunHistoryService _runHistoryService = new();
 
+    /// <summary>Error screenshot service — captures target window on macro failure.</summary>
+    private readonly ErrorScreenshotService _errorScreenshotService = new();
+
     /// <summary>Current run record being populated during execution.</summary>
     private MacroRunRecord? _currentRunRecord;
 
@@ -537,6 +540,20 @@ public sealed class MacroEngine
             {
                 OnLog($"[CRITICAL] Execution faulted: {ex.Message}");
                 OnLog($"[StackTrace] {ex.StackTrace}");
+
+                // Capture error screenshot
+                try
+                {
+                    string? screenshotPath = _errorScreenshotService.CaptureOnError(
+                        _runtimeTargetHwnd, script.Name, ex.Message, _totalRowsDone);
+                    if (screenshotPath != null)
+                        OnLog($"[Screenshot] Error captured: {screenshotPath}");
+                }
+                catch (Exception ssEx)
+                {
+                    OnLog($"[Screenshot] Failed to capture: {ssEx.Message}");
+                }
+
                 ExecutionFaulted?.Invoke(ex);
                 FireTelegramCompletion(script, rowsDone: _totalRowsDone, total: _totalRowsTotal, hasError: true, lastErrorMessage: ex.Message);
 
