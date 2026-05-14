@@ -325,6 +325,114 @@ public sealed class MacroTemplateService
                     new KeyPressAction { DisplayName = "Cast R (Ultimate)", VirtualKeyCode = 0x52, KeyName = "R", HoldDurationMs = 50 },
                 ]
             },
+            // PoE — Path of Exile Ultimatum Auto
+            new MacroTemplate
+            {
+                Name = "⚔️ Path of Exile — Ultimatum Auto",
+                Description = "Auto PoE Ultimatum đầy đủ: Flask + Skill + Vision 2 bước (Icon → Accept). Chỉ cần Snip hình và chạy.",
+                Category = "mmorpg",
+                Difficulty = "Advanced",
+                EstimatedSetupTime = "5 min",
+                DefaultTargetWindow = "Path of Exile",
+                DefaultRepeatCount = 0,
+                Actions =
+                [
+                    // Init flask timer
+                    new SetVariableAction { DisplayName = "⚙️ Init flask_timer", VarName = "flask_timer", Value = "0", Operation = "Set" },
+
+                    new RepeatAction
+                    {
+                        DisplayName = "🔄 Vòng lặp chính (vô hạn)",
+                        RepeatCount = 0,
+                        IntervalMs = 300,
+                        LoopActions =
+                        [
+                            // ═══ FLASK — mỗi ~5 giây bấm 1-5 ═══
+                            new SetVariableAction { DisplayName = "flask_timer++", VarName = "flask_timer", Value = "1", Operation = "Increment" },
+                            new IfVariableAction
+                            {
+                                DisplayName = "🧪 Flask (mỗi 15 loop ≈ 5s)",
+                                VarName = "flask_timer",
+                                CompareOp = ">=",
+                                Value = "15",
+                                ThenActions =
+                                [
+                                    new KeyPressAction { DisplayName = "Flask 1", KeyName = "D1", VirtualKeyCode = 0x31, HoldDurationMs = 30, InputMode = KeyInputMode.RawInput },
+                                    new WaitAction { DisplayName = "delay", DelayMin = 50, DelayMax = 80 },
+                                    new KeyPressAction { DisplayName = "Flask 2", KeyName = "D2", VirtualKeyCode = 0x32, HoldDurationMs = 30, InputMode = KeyInputMode.RawInput },
+                                    new WaitAction { DisplayName = "delay", DelayMin = 50, DelayMax = 80 },
+                                    new KeyPressAction { DisplayName = "Flask 3", KeyName = "D3", VirtualKeyCode = 0x33, HoldDurationMs = 30, InputMode = KeyInputMode.RawInput },
+                                    new WaitAction { DisplayName = "delay", DelayMin = 50, DelayMax = 80 },
+                                    new KeyPressAction { DisplayName = "Flask 4", KeyName = "D4", VirtualKeyCode = 0x34, HoldDurationMs = 30, InputMode = KeyInputMode.RawInput },
+                                    new WaitAction { DisplayName = "delay", DelayMin = 50, DelayMax = 80 },
+                                    new KeyPressAction { DisplayName = "Flask 5", KeyName = "D5", VirtualKeyCode = 0x35, HoldDurationMs = 30, InputMode = KeyInputMode.RawInput },
+                                    new WaitAction { DisplayName = "delay", DelayMin = 30, DelayMax = 60 },
+                                    new SetVariableAction { DisplayName = "Reset flask_timer", VarName = "flask_timer", Value = "0", Operation = "Set" },
+                                ],
+                                ElseActions = []
+                            },
+
+                            // ═══ VISION — Tìm Icon → Click → Đợi → Accept ═══
+                            new IfImageAction
+                            {
+                                DisplayName = "👁️ Bước 1: Tìm Icon Ultimatum (Snip hình vào đây)",
+                                ImagePath = "",
+                                ImagePaths = [],
+                                Threshold = 0.65,
+                                TimeoutMs = 1500,
+                                RetryUntilFound = false,
+                                ClickOnFound = true,
+                                ClickMode = ClickMode.Raw,
+                                RandomOffset = 3,
+                                ThenActions =
+                                [
+                                    new LogAction { DisplayName = "📝 Log", Message = "Chọn icon: {{foundImageName}} tại ({{image_x}}, {{image_y}})" },
+                                    new WaitAction { DisplayName = "⏳ Đợi UI Accept hiện", DelayMin = 1500, DelayMax = 2500 },
+
+                                    // Bước 2: Tìm nút Accept Trial
+                                    new IfImageAction
+                                    {
+                                        DisplayName = "✅ Bước 2: Tìm nút Accept (Snip hình vào đây)",
+                                        ImagePath = "",
+                                        ImagePaths = [],
+                                        Threshold = 0.60,
+                                        TimeoutMs = 8000,
+                                        RetryUntilFound = true,
+                                        RetryIntervalMs = 400,
+                                        MaxRetryCount = 20,
+                                        ClickOnFound = true,
+                                        ClickMode = ClickMode.Raw,
+                                        RandomOffset = 3,
+                                        ThenActions =
+                                        [
+                                            new LogAction { DisplayName = "✅ Accepted!", Message = "✅ Accept Trial thành công!" },
+                                            new WaitAction { DisplayName = "⏳ Đợi trial bắt đầu", DelayMin = 3000, DelayMax = 5000 },
+                                        ],
+                                        ElseActions =
+                                        [
+                                            new LogAction { DisplayName = "⚠️ Timeout", Message = "Không tìm thấy nút Accept sau 8s" },
+                                        ]
+                                    },
+                                ],
+                                ElseActions = []
+                            },
+
+                            // ═══ SKILL — đánh quái liên tục ═══
+                            new ClickAction
+                            {
+                                DisplayName = "⚔️ Main Skill (Right Click giữa màn hình)",
+                                X = 960, Y = 540,
+                                Button = MouseButton.Right,
+                                Mode = ClickMode.Raw,
+                            },
+                            new WaitAction { DisplayName = "Skill delay", DelayMin = 100, DelayMax = 200 },
+
+                            new KeyPressAction { DisplayName = "🏃 Move Skill (W)", KeyName = "W", VirtualKeyCode = 0x57, HoldDurationMs = 50, InputMode = KeyInputMode.RawInput },
+                            new WaitAction { DisplayName = "Move delay", DelayMin = 200, DelayMax = 400 },
+                        ]
+                    }
+                ]
+            },
             // General Templates
             new MacroTemplate
             {
