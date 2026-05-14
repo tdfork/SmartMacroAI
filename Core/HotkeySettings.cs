@@ -17,6 +17,8 @@ public class HotkeySettings
     public int ToggleAppKey         { get; set; } = 0x74; // VK_F5
     public int ToggleTargetModifier { get; set; } = MOD_CONTROL;
     public int ToggleTargetKey      { get; set; } = 0x76; // VK_F7
+    public int ToggleMacroModifier  { get; set; } = MOD_CONTROL;
+    public int ToggleMacroKey       { get; set; } = 0x75; // VK_F6
 
     private static readonly string SettingsPath = Path.Combine(
         AppDomain.CurrentDomain.BaseDirectory, "hotkey_settings.json");
@@ -87,4 +89,5 @@ public class HotkeySettings
 
     public string ToggleAppDisplay => $"{ModifierToString(ToggleAppModifier)} + {KeyToString(ToggleAppKey)}";
     public string ToggleTargetDisplay => $"{ModifierToString(ToggleTargetModifier)} + {KeyToString(ToggleTargetKey)}";
+    public string ToggleMacroDisplay => $"{ModifierToString(ToggleMacroModifier)} + {KeyToString(ToggleMacroKey)}";
 }

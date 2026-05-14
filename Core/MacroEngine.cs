@@ -1379,7 +1379,10 @@ public sealed class MacroEngine
         if (!IsTargetValid()) return;
 
         if (!Win32Api.IsInsideClientArea(hwnd, click.X, click.Y))
-            OnLog($"  ⚠ ({click.X},{click.Y}) is outside client rect");
+        {
+            OnLog($"  ⚠ ({click.X},{click.Y}) is outside client rect — SKIPPED to prevent misclick");
+            return;
+        }
 
         // ── HARDWARE MODE: SetCursorPos + mouse_event + SetForegroundWindow ──────────
         if (click.Mode == ClickMode.Hardware)
@@ -2940,7 +2943,13 @@ public sealed class MacroEngine
                 int cx = match.Value.X + ox;
                 int cy = match.Value.Y + oy;
 
-                // Route by per-action ClickMode, not global HardwareMode
+                // Safety: skip click if coordinates ended up outside client area
+                if (!Win32Api.IsInsideClientArea(hwnd, cx, cy))
+                {
+                    OnLog($"    ⚠ Click target ({cx},{cy}) is outside client rect — SKIPPED");
+                }
+                else
+                {                // Route by per-action ClickMode, not global HardwareMode
                 switch (ifImage.ClickMode)
                 {
                     case ClickMode.Hardware:
@@ -3016,6 +3025,7 @@ public sealed class MacroEngine
                             break;
                         }
                 }
+                } // end else (inside client area)
             }
 
             if (ifImage.ThenActions.Count > 0)

@@ -1479,6 +1479,15 @@
                                                       Style="{StaticResource DarkComboBoxStyle}" FontSize="12" />
                                         </StackPanel>
 
+                                        <TextBlock Style="{StaticResource FieldLabelStyle}" Text="{DynamicResource ui_Settings_ToggleMacro}" />
+                                        <StackPanel Orientation="Horizontal" Margin="0,6,0,16">
+                                            <ComboBox x:Name="CmbToggleMacroMod" Width="130"
+                                                      Style="{StaticResource DarkComboBoxStyle}" FontSize="12" />
+                                            <TextBlock Text="{DynamicResource ui_Settings_Plus}" FontSize="14" Foreground="{StaticResource SubtextBrush}" VerticalAlignment="Center" />
+                                            <ComboBox x:Name="CmbToggleMacroKey" Width="90"
+                                                      Style="{StaticResource DarkComboBoxStyle}" FontSize="12" />
+                                        </StackPanel>
+
                                         <Button Style="{StaticResource PrimaryButtonStyle}" Content="{DynamicResource ui_SaveHotkeys}" Click="BtnSaveHotkeys_Click" Padding="20,10" HorizontalAlignment="Left" />
                                     </StackPanel>
                                 </Border>

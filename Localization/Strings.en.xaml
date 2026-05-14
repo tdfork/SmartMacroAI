@@ -158,6 +158,7 @@
     <system:String x:Key="ui_Settings_HotkeysBlurb">Global shortcuts work even when the app is hidden.</system:String>
     <system:String x:Key="ui_Settings_ToggleApp">TOGGLE APP VISIBILITY (hide/show SmartMacroAI)</system:String>
     <system:String x:Key="ui_Settings_ToggleTarget">TOGGLE TARGET WINDOW (hide/show target window)</system:String>
+    <system:String x:Key="ui_Settings_ToggleMacro">TOGGLE MACRO (Run/Stop macro)</system:String>
     <system:String x:Key="ui_Settings_Plus">  +  </system:String>
     <system:String x:Key="ui_SaveHotkeys">Save Hotkeys</system:String>
     <system:String x:Key="ui_Settings_SystemTray">System Tray</system:String>

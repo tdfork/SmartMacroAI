@@ -67,6 +67,7 @@ public partial class MainWindow : Window
     // ── Hotkey & Tray ──
     private const int HOTKEY_TOGGLE_APP    = 1;
     private const int HOTKEY_TOGGLE_TARGET = 2;
+    private const int HOTKEY_TOGGLE_MACRO  = 3;
     private HotkeySettings _hotkeySettings = new();
     private HwndSource? _hwndSource;
     private WinForms.NotifyIcon? _trayIcon;
@@ -181,7 +182,9 @@ public partial class MainWindow : Window
             (uint)_hotkeySettings.ToggleAppModifier, (uint)_hotkeySettings.ToggleAppKey);
         Win32Api.RegisterHotKey(hwnd, HOTKEY_TOGGLE_TARGET,
             (uint)_hotkeySettings.ToggleTargetModifier, (uint)_hotkeySettings.ToggleTargetKey);
-        AppendLog($"Hotkeys registered: App={_hotkeySettings.ToggleAppDisplay}, Target={_hotkeySettings.ToggleTargetDisplay}");
+        Win32Api.RegisterHotKey(hwnd, HOTKEY_TOGGLE_MACRO,
+            (uint)_hotkeySettings.ToggleMacroModifier, (uint)_hotkeySettings.ToggleMacroKey);
+        AppendLog($"Hotkeys registered: App={_hotkeySettings.ToggleAppDisplay}, Target={_hotkeySettings.ToggleTargetDisplay}, Macro={_hotkeySettings.ToggleMacroDisplay}");
     }
 
     private void UnregisterHotkeys()
@@ -190,6 +193,7 @@ public partial class MainWindow : Window
         if (hwnd == IntPtr.Zero) return;
         Win32Api.UnregisterHotKey(hwnd, HOTKEY_TOGGLE_APP);
         Win32Api.UnregisterHotKey(hwnd, HOTKEY_TOGGLE_TARGET);
+        Win32Api.UnregisterHotKey(hwnd, HOTKEY_TOGGLE_MACRO);
     }
 
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
@@ -199,6 +203,7 @@ public partial class MainWindow : Window
             int id = wParam.ToInt32();
             if (id == HOTKEY_TOGGLE_APP) ToggleAppVisibility();
             else if (id == HOTKEY_TOGGLE_TARGET) ToggleTargetVisibility();
+            else if (id == HOTKEY_TOGGLE_MACRO) ToggleMacroExecution();
             handled = true;
         }
         return IntPtr.Zero;
@@ -244,6 +249,26 @@ public partial class MainWindow : Window
                 StealthHideWindow(hwnd, title);
                 Dispatcher.Invoke(() => AppendLog($"Hotkey: hidden \"{title}\""));
             }
+        }
+    }
+
+    /// <summary>
+    /// Toggle macro Run/Stop via global hotkey. If macro is running → stop it.
+    /// If macro is idle → start it (same as clicking Run button).
+    /// </summary>
+    private void ToggleMacroExecution()
+    {
+        if (_cts is not null && !_cts.IsCancellationRequested)
+        {
+            // Macro is running → stop it
+            BtnStopMacro_Click(this, new RoutedEventArgs());
+            AppendLog($"Hotkey ({_hotkeySettings.ToggleMacroDisplay}): Macro STOPPED");
+        }
+        else if (BtnRunMacro.IsEnabled)
+        {
+            // Macro is idle → start it
+            AppendLog($"Hotkey ({_hotkeySettings.ToggleMacroDisplay}): Macro START");
+            BtnRunMacro_Click(this, new RoutedEventArgs());
         }
     }
 
@@ -867,11 +892,15 @@ public partial class MainWindow : Window
         CmbToggleAppKey.ItemsSource = KeyOptions;
         CmbToggleTargetMod.ItemsSource = ModifierOptions;
         CmbToggleTargetKey.ItemsSource = KeyOptions;
+        CmbToggleMacroMod.ItemsSource = ModifierOptions;
+        CmbToggleMacroKey.ItemsSource = KeyOptions;
 
         CmbToggleAppMod.SelectedItem = HotkeySettings.ModifierToString(_hotkeySettings.ToggleAppModifier);
         CmbToggleAppKey.SelectedItem = HotkeySettings.KeyToString(_hotkeySettings.ToggleAppKey);
         CmbToggleTargetMod.SelectedItem = HotkeySettings.ModifierToString(_hotkeySettings.ToggleTargetModifier);
         CmbToggleTargetKey.SelectedItem = HotkeySettings.KeyToString(_hotkeySettings.ToggleTargetKey);
+        CmbToggleMacroMod.SelectedItem = HotkeySettings.ModifierToString(_hotkeySettings.ToggleMacroModifier);
+        CmbToggleMacroKey.SelectedItem = HotkeySettings.KeyToString(_hotkeySettings.ToggleMacroKey);
 
         InitLanguageCombo();
         LoadVisionScaleSlidersFromSettings();
@@ -1417,8 +1446,11 @@ public partial class MainWindow : Window
         string? appKey = CmbToggleAppKey.SelectedItem as string;
         string? tgtMod = CmbToggleTargetMod.SelectedItem as string;
         string? tgtKey = CmbToggleTargetKey.SelectedItem as string;
+        string? macroMod = CmbToggleMacroMod.SelectedItem as string;
+        string? macroKey = CmbToggleMacroKey.SelectedItem as string;
 
-        if (appMod is null || appKey is null || tgtMod is null || tgtKey is null)
+        if (appMod is null || appKey is null || tgtMod is null || tgtKey is null
+            || macroMod is null || macroKey is null)
         {
             ShowToast(LanguageManager.GetString("ui_Toast_SelectHotkeys"), isError: true);
             return;
@@ -1430,6 +1462,8 @@ public partial class MainWindow : Window
         _hotkeySettings.ToggleAppKey = HotkeySettings.StringToKey(appKey);
         _hotkeySettings.ToggleTargetModifier = HotkeySettings.StringToModifier(tgtMod);
         _hotkeySettings.ToggleTargetKey = HotkeySettings.StringToKey(tgtKey);
+        _hotkeySettings.ToggleMacroModifier = HotkeySettings.StringToModifier(macroMod);
+        _hotkeySettings.ToggleMacroKey = HotkeySettings.StringToKey(macroKey);
         _hotkeySettings.Save();
 
         RegisterHotkeys();

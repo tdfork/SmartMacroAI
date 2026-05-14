@@ -158,6 +158,7 @@
     <system:String x:Key="ui_Settings_HotkeysBlurb">Phím tắt hoạt động ngay cả khi ứng dụng bị ẩn.</system:String>
     <system:String x:Key="ui_Settings_ToggleApp">ẨN/HIỆN ỨNG DỤNG (SmartMacroAI)</system:String>
     <system:String x:Key="ui_Settings_ToggleTarget">ẨN/HIỆN CỬA SỔ MỤC TIÊU</system:String>
+    <system:String x:Key="ui_Settings_ToggleMacro">CHẠY/DỪNG MACRO (Run/Stop)</system:String>
     <system:String x:Key="ui_Settings_Plus">  +  </system:String>
     <system:String x:Key="ui_SaveHotkeys">Lưu phím tắt</system:String>
     <system:String x:Key="ui_Settings_SystemTray">Khay hệ thống</system:String>
