@@ -132,6 +132,13 @@ public sealed class DashboardRowVm : INotifyPropertyChanged
         _ => LanguageManager.GetString("ui_Schedule_Scheduled")
     } : "—";
 
+    private bool _isSelected;
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set { if (_isSelected != value) { _isSelected = value; Notify(); } }
+    }
+
     private bool _stealthMode;
     public bool StealthMode
     {

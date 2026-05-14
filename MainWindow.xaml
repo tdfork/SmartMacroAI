@@ -560,7 +560,7 @@
                             <DockPanel>
                                 <DockPanel DockPanel.Dock="Top" Margin="8,8,8,6">
                                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                                        <Button Content="▶▶ Run All" Click="BtnRunAllParallel_Click" Padding="12,6" FontSize="11" Margin="0,0,6,0" Background="#A6E3A1" Foreground="#1E1E2E" BorderThickness="0" Cursor="Hand" FontWeight="SemiBold" ToolTip="Chạy macro trên tất cả cửa sổ đã chọn (song song)" />
+                                        <Button Content="▶▶ Run Selected" Click="BtnRunAllParallel_Click" Padding="12,6" FontSize="11" Margin="0,0,6,0" Background="#A6E3A1" Foreground="#1E1E2E" BorderThickness="0" Cursor="Hand" FontWeight="SemiBold" ToolTip="Chạy các macro đã tick (song song)" />
                                         <Button Style="{StaticResource DangerButtonStyle}" Content="{DynamicResource ui_StopAll}" Click="BtnStopAllMacros_Click" Padding="12,6" FontSize="11" Margin="0,0,6,0" />
                                         <Button Click="BtnGlobalHistory_Click" Padding="12,6" FontSize="11" Margin="0,0,6,0" Background="#45475A" Foreground="#CDD6F4" BorderThickness="0" Cursor="Hand">
                                             <StackPanel Orientation="Horizontal">
@@ -584,7 +584,7 @@
                                               CanUserAddRows="False" CanUserDeleteRows="False"
                                               CanUserReorderColumns="False" CanUserSortColumns="False"
                                               CanUserResizeColumns="True"
-                                              IsReadOnly="True"
+                                              IsReadOnly="False"
                                               SelectionMode="Single" SelectionUnit="FullRow"
                                               HeadersVisibility="Column"
                                               GridLinesVisibility="Horizontal"
@@ -641,6 +641,23 @@
                                         </DataGrid.CellStyle>
 
                                         <DataGrid.Columns>
+
+                                            <!-- Col 0: Checkbox for parallel selection -->
+                                            <DataGridTemplateColumn Width="36" MinWidth="36">
+                                                <DataGridTemplateColumn.HeaderTemplate>
+                                                    <DataTemplate>
+                                                        <CheckBox x:Name="ChkSelectAll" Click="ChkSelectAllDashboard_Click"
+                                                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                  ToolTip="Chọn tất cả"/>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.HeaderTemplate>
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
 
                                             <!-- Col 1: Tên macro — flexible, always visible -->
                                             <DataGridTemplateColumn Header="{DynamicResource ui_Dash_Col_Name}" Width="*" MinWidth="140">

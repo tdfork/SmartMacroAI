@@ -1719,53 +1719,90 @@ public partial class MainWindow : Window
     // ── Parallel Executor ──
     private ParallelExecutor? _parallelExecutor;
 
+    private void ChkSelectAllDashboard_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.CheckBox chk)
+        {
+            bool isChecked = chk.IsChecked == true;
+            foreach (var row in _dashboardRows)
+                row.IsSelected = isChecked;
+        }
+    }
+
     private void BtnRunAllParallel_Click(object sender, RoutedEventArgs e)
     {
-        // Collect all dashboard rows that have a valid target window and are not already running
-        var eligibleRows = _dashboardRows
-            .Where(r => !r.IsRunning && !string.IsNullOrWhiteSpace(r.TargetWindow))
+        // Only run macros that are selected (ticked) and not already running
+        var selectedRows = _dashboardRows
+            .Where(r => r.IsSelected && !r.IsRunning && !string.IsNullOrWhiteSpace(r.TargetWindow))
             .ToList();
 
-        if (eligibleRows.Count == 0)
+        if (selectedRows.Count == 0)
         {
-            ShowToast("Không có macro nào sẵn sàng để chạy song song.", isError: true);
+            ShowToast("Chưa chọn macro nào. Hãy tick ☑ các macro muốn chạy song song.", isError: true);
             return;
         }
 
-        // Resolve HWNDs for each row
-        var targets = new List<(MacroScript Script, IntPtr Hwnd)>();
-        foreach (var row in eligibleRows)
+        // Resolve HWNDs for each selected row
+        var targets = new List<(MacroScript Script, IntPtr Hwnd, DashboardRowVm Row)>();
+        foreach (var row in selectedRows)
         {
             IntPtr hwnd = row.TargetHwnd != IntPtr.Zero && Win32Api.IsWindow(row.TargetHwnd)
                 ? row.TargetHwnd
                 : Win32Api.FindWindowByPartialTitle(row.TargetWindow);
 
-            if (hwnd == IntPtr.Zero) continue;
+            if (hwnd == IntPtr.Zero)
+            {
+                AppendLog($"[Parallel] Bỏ qua \"{row.MacroName}\" — không tìm thấy cửa sổ \"{row.TargetWindow}\"");
+                continue;
+            }
             if (row.Script is null) continue;
 
-            targets.Add((row.Script, hwnd));
+            targets.Add((row.Script, hwnd, row));
         }
 
         if (targets.Count == 0)
         {
-            ShowToast("Không tìm thấy cửa sổ mục tiêu nào.", isError: true);
+            ShowToast("Không tìm thấy cửa sổ mục tiêu cho các macro đã chọn.", isError: true);
             return;
         }
 
         _parallelExecutor ??= new ParallelExecutor();
-        _parallelExecutor.InstanceLog += (id, msg) => Dispatcher.Invoke(() => AppendLog($"[Parallel/{id[..8]}] {msg}"));
+        _parallelExecutor.InstanceLog += (id, msg) => Dispatcher.Invoke(() => AppendLog($"[P/{id[..6]}] {msg}"));
+
+        int started = 0;
+        foreach (var (script, hwnd, row) in targets)
+        {
+            var hwnds = new List<IntPtr> { hwnd };
+            int count = _parallelExecutor.RunAll(script, hwnds, row.HardwareMode);
+            if (count > 0)
+            {
+                row.Status = "Running";
+                started += count;
+            }
+        }
+
+        // Wire status changes to update row status
         _parallelExecutor.StatusChanged += (id, status) => Dispatcher.Invoke(() =>
         {
-            AppendLog($"[Parallel] {id[..8]}: {status}");
+            if (status is ParallelInstanceStatus.Completed or ParallelInstanceStatus.Stopped or ParallelInstanceStatus.Error)
+            {
+                // Find the row by matching and update status
+                foreach (var row in _dashboardRows.Where(r => r.IsRunning && r.IsSelected))
+                {
+                    // Simple heuristic: mark first running+selected row as done
+                    row.Status = status switch
+                    {
+                        ParallelInstanceStatus.Completed => "Ready",
+                        ParallelInstanceStatus.Error => "Error",
+                        _ => "Ready"
+                    };
+                    break;
+                }
+            }
             UpdateProcessBar();
         });
 
-        // Use the first script as the template for all (common use case: same macro, multiple windows)
-        var script = targets[0].Script;
-        var hwnds = targets.Select(t => t.Hwnd).ToList();
-
-        int started = _parallelExecutor.RunAll(script, hwnds);
-        AppendLog($"[Parallel] Started {started} instance(s) on {hwnds.Count} window(s)");
+        AppendLog($"[Parallel] Đã chạy {started}/{targets.Count} macro song song");
         ShowToast($"Đã chạy {started} macro song song!", isError: false);
         UpdateProcessBar();
     }
