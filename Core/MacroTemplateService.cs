@@ -61,11 +61,10 @@ public sealed class MacroTemplateService
     {
         var templates = new List<MacroTemplate>();
 
-        if (!Directory.Exists(TemplatesDir))
-        {
-            Directory.CreateDirectory(TemplatesDir);
-            SeedDefaultTemplates();
-        }
+        Directory.CreateDirectory(TemplatesDir);
+
+        // Always seed missing templates (so new templates appear after updates)
+        SeedDefaultTemplates();
 
         foreach (string file in Directory.GetFiles(TemplatesDir, "*.json", SearchOption.AllDirectories))
         {
@@ -80,6 +79,15 @@ public sealed class MacroTemplateService
                     templates.Add(template);
             }
             catch { }
+        }
+
+        // Fallback: if no JSON files found (first run or file system issue), return in-memory defaults
+        if (templates.Count == 0)
+        {
+            var defaults = GetDefaultTemplates();
+            if (categoryFilter is not null)
+                defaults = defaults.Where(t => string.Equals(t.Category, categoryFilter, StringComparison.OrdinalIgnoreCase)).ToList();
+            return defaults.OrderBy(t => t.Category).ThenBy(t => t.Name).ToList();
         }
 
         return templates.OrderBy(t => t.Category).ThenBy(t => t.Name).ToList();
