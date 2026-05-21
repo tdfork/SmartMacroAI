@@ -433,6 +433,125 @@ public sealed class MacroTemplateService
                     }
                 ]
             },
+            // Sunflower Land — Web3 Farming Game (browser-based)
+            new MacroTemplate
+            {
+                Name = "🌻 Sunflower Land — Auto Harvest & Plant",
+                Description = "Tự động thu hoạch và trồng lại cây trong Sunflower Land. Hỗ trợ: harvest plot → plant seed → chờ → lặp lại. Dùng cho browser (Playwright/CloakBrowser).",
+                Category = "idle",
+                Difficulty = "Medium",
+                EstimatedSetupTime = "5 min",
+                DefaultTargetWindow = "Sunflower Land",
+                DefaultRepeatCount = 0,
+                Actions =
+                [
+                    // Mở game (nếu dùng web mode)
+                    new WebNavigateAction { DisplayName = "🌐 Mở Sunflower Land", Url = "https://sunflower-land.com/play" },
+                    new WaitAction { DisplayName = "⏳ Đợi game load", Milliseconds = 5000, DelayMin = 4000, DelayMax = 6000 },
+
+                    new RepeatAction
+                    {
+                        DisplayName = "🔄 Vòng lặp Farm (vô hạn)",
+                        RepeatCount = 0,
+                        IntervalMs = 1000,
+                        LoopActions =
+                        [
+                            // ═══ THU HOẠCH — Click từng ô đất ═══
+                            new IfImageAction
+                            {
+                                DisplayName = "🌾 Tìm cây đã chín (Snip hình cây chín vào đây)",
+                                ImagePath = "",
+                                ImagePaths = [],
+                                Threshold = 0.70,
+                                TimeoutMs = 3000,
+                                RetryUntilFound = false,
+                                ClickOnFound = true,
+                                ClickMode = ClickMode.Stealth,
+                                RandomOffset = 5,
+                                ThenActions =
+                                [
+                                    new LogAction { DisplayName = "📝 Log harvest", Message = "Thu hoạch tại ({{image_x}}, {{image_y}})" },
+                                    new WaitAction { DisplayName = "⏳ Đợi animation harvest", DelayMin = 800, DelayMax = 1200 },
+
+                                    // Click confirm harvest (nếu có popup)
+                                    new IfImageAction
+                                    {
+                                        DisplayName = "✅ Tìm nút Harvest/Confirm (Snip nếu có)",
+                                        ImagePath = "",
+                                        ImagePaths = [],
+                                        Threshold = 0.65,
+                                        TimeoutMs = 2000,
+                                        RetryUntilFound = false,
+                                        ClickOnFound = true,
+                                        ClickMode = ClickMode.Stealth,
+                                        RandomOffset = 3,
+                                        ThenActions =
+                                        [
+                                            new WaitAction { DisplayName = "Đợi confirm", DelayMin = 500, DelayMax = 800 },
+                                        ],
+                                        ElseActions = []
+                                    },
+                                ],
+                                ElseActions =
+                                [
+                                    new LogAction { DisplayName = "💤 Chưa có cây chín", Message = "Không tìm thấy cây chín — đợi..." },
+                                ]
+                            },
+
+                            // ═══ TRỒNG LẠI — Click ô đất trống → chọn seed ═══
+                            new IfImageAction
+                            {
+                                DisplayName = "🟫 Tìm ô đất trống (Snip hình đất trống vào đây)",
+                                ImagePath = "",
+                                ImagePaths = [],
+                                Threshold = 0.70,
+                                TimeoutMs = 3000,
+                                RetryUntilFound = false,
+                                ClickOnFound = true,
+                                ClickMode = ClickMode.Stealth,
+                                RandomOffset = 3,
+                                ThenActions =
+                                [
+                                    new WaitAction { DisplayName = "⏳ Đợi menu seed mở", DelayMin = 600, DelayMax = 1000 },
+
+                                    // Click chọn loại seed (Sunflower / Potato / Pumpkin...)
+                                    new IfImageAction
+                                    {
+                                        DisplayName = "🌱 Chọn Seed (Snip hình seed muốn trồng)",
+                                        ImagePath = "",
+                                        ImagePaths = [],
+                                        Threshold = 0.65,
+                                        TimeoutMs = 2000,
+                                        RetryUntilFound = false,
+                                        ClickOnFound = true,
+                                        ClickMode = ClickMode.Stealth,
+                                        RandomOffset = 3,
+                                        ThenActions =
+                                        [
+                                            new LogAction { DisplayName = "📝 Đã trồng", Message = "Trồng seed tại ({{image_x}}, {{image_y}})" },
+                                            new WaitAction { DisplayName = "Đợi plant animation", DelayMin = 500, DelayMax = 800 },
+                                        ],
+                                        ElseActions =
+                                        [
+                                            new LogAction { DisplayName = "⚠️ Không tìm thấy seed", Message = "Hết seed hoặc không tìm thấy nút seed" },
+                                        ]
+                                    },
+                                ],
+                                ElseActions = []
+                            },
+
+                            // ═══ ĐỢI — Chờ cây mọc ═══
+                            new WaitAction
+                            {
+                                DisplayName = "⏰ Đợi trước khi quét lại (30s–60s)",
+                                Milliseconds = 45000,
+                                DelayMin = 30000,
+                                DelayMax = 60000,
+                            },
+                        ]
+                    }
+                ]
+            },
             // General Templates
             new MacroTemplate
             {

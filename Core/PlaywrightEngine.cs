@@ -17,6 +17,9 @@ public enum BrowserMode
 
     /// <summary>Connect to an AdsPower-managed browser profile via CDP.</summary>
     AdsPower,
+
+    /// <summary>Connect to CloakBrowser stealth Chromium via CDP (anti-detect, bypass Cloudflare/reCAPTCHA).</summary>
+    CloakBrowser,
 }
 
 /// <summary>
@@ -42,6 +45,24 @@ public sealed class PlaywrightEngine : IAsyncDisposable
     public string? AdsPowerProfileId { get; set; }
 
     /// <summary>
+    /// CDP endpoint for CloakBrowser. Default: http://127.0.0.1:9222
+    /// Set this when using <see cref="BrowserMode.CloakBrowser"/>.
+    /// Can also be a ws:// WebSocket URL from `cloakserve`.
+    /// </summary>
+    public string CloakBrowserEndpoint { get; set; } = "http://127.0.0.1:9222";
+
+    /// <summary>
+    /// Optional fingerprint seed for CloakBrowser (deterministic identity).
+    /// Leave empty for random fingerprint each session.
+    /// </summary>
+    public string? CloakFingerprint { get; set; }
+
+    /// <summary>
+    /// Optional proxy for CloakBrowser (e.g., "http://user:pass@proxy:8080" or "socks5://...").
+    /// </summary>
+    public string? CloakProxy { get; set; }
+
+    /// <summary>
     /// Creates Playwright, launches Chromium (non-headless), and opens a page if needed.
     /// Runs the heavy initialization on a thread-pool thread to guarantee no UI blocking.
     /// </summary>
@@ -56,7 +77,11 @@ public sealed class PlaywrightEngine : IAsyncDisposable
         {
             _playwright = await Playwright.CreateAsync().ConfigureAwait(false);
 
-            if (Mode == BrowserMode.AdsPower && !string.IsNullOrWhiteSpace(AdsPowerProfileId))
+            if (Mode == BrowserMode.CloakBrowser)
+            {
+                _browser = await LaunchCloakBrowserAsync(cancellationToken).ConfigureAwait(false);
+            }
+            else if (Mode == BrowserMode.AdsPower && !string.IsNullOrWhiteSpace(AdsPowerProfileId))
             {
                 _browser = await LaunchAdsPowerBrowserAsync(AdsPowerProfileId, cancellationToken)
                     .ConfigureAwait(false);
@@ -72,6 +97,35 @@ public sealed class PlaywrightEngine : IAsyncDisposable
             _context = await _browser.NewContextAsync().ConfigureAwait(false);
             _page = await _context.NewPageAsync().ConfigureAwait(false);
         }, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Connects to a CloakBrowser instance via CDP.
+    /// CloakBrowser must be running (e.g., via `cloakserve` or Docker container).
+    /// Supports fingerprint seeds and proxy via query params.
+    /// </summary>
+    private async Task<IBrowser> LaunchCloakBrowserAsync(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        string endpoint = CloakBrowserEndpoint;
+
+        // Append fingerprint and proxy as query params if using cloakserve multiplexer
+        if (!string.IsNullOrWhiteSpace(CloakFingerprint) || !string.IsNullOrWhiteSpace(CloakProxy))
+        {
+            var separator = endpoint.Contains('?') ? "&" : "?";
+            if (!string.IsNullOrWhiteSpace(CloakFingerprint))
+            {
+                endpoint += $"{separator}fingerprint={Uri.EscapeDataString(CloakFingerprint)}";
+                separator = "&";
+            }
+            if (!string.IsNullOrWhiteSpace(CloakProxy))
+            {
+                endpoint += $"{separator}proxy={Uri.EscapeDataString(CloakProxy)}";
+            }
+        }
+
+        return await _playwright!.Chromium.ConnectOverCDPAsync(endpoint).ConfigureAwait(false);
     }
 
     private async Task<IBrowser> LaunchAdsPowerBrowserAsync(string profileId, CancellationToken ct)
