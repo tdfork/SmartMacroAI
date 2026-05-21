@@ -560,6 +560,227 @@ public sealed class MacroTemplateService
                     }
                 ]
             },
+            // ═══ LEGACY TEMPLATES (từ bản gốc, dùng LanguageManager) ═══
+            new MacroTemplate
+            {
+                Name = "🔐 Auto Login (Web)",
+                Description = "Mở browser, điền username/password, click login. Dùng cho web automation.",
+                Category = "web",
+                Difficulty = "Easy",
+                EstimatedSetupTime = "2 min",
+                DefaultTargetWindow = "",
+                DefaultRepeatCount = 1,
+                Actions =
+                [
+                    new LaunchAndBindAction { DisplayName = "🌐 Mở Browser", Url = "{{url}}", Browser = LaunchBrowserKind.Edge, BindTimeoutMs = 30000, PollIntervalMs = 500 },
+                    new WaitAction { DisplayName = "Đợi trang load", DelayMin = 2000, DelayMax = 3000 },
+                    new WebClickAction { DisplayName = "Click ô Username", CssSelector = "{{username_selector}}" },
+                    new WebTypeAction { DisplayName = "Gõ Username", CssSelector = "{{username_selector}}", TextToType = "{{username}}" },
+                    new WebClickAction { DisplayName = "Click ô Password", CssSelector = "{{password_selector}}" },
+                    new WebTypeAction { DisplayName = "Gõ Password", CssSelector = "{{password_selector}}", TextToType = "{{password}}" },
+                    new WebClickAction { DisplayName = "Click Login", CssSelector = "{{login_button_selector}}" },
+                ]
+            },
+            new MacroTemplate
+            {
+                Name = "📊 Auto Fill Form (CSV)",
+                Description = "Điền form web tự động từ dữ liệu CSV. Mỗi dòng CSV = 1 lần điền.",
+                Category = "web",
+                Difficulty = "Medium",
+                EstimatedSetupTime = "5 min",
+                DefaultTargetWindow = "",
+                DefaultRepeatCount = 1,
+                Actions =
+                [
+                    new LaunchAndBindAction { DisplayName = "🌐 Mở Form", Url = "{{form_url}}", Browser = LaunchBrowserKind.Edge, BindTimeoutMs = 30000 },
+                    new WaitAction { DisplayName = "Đợi form load", DelayMin = 2000, DelayMax = 3000 },
+                    new RepeatAction
+                    {
+                        DisplayName = "🔄 Lặp mỗi dòng CSV",
+                        RepeatCount = 0,
+                        IntervalMs = 1000,
+                        LoopActions =
+                        [
+                            new WebClickAction { DisplayName = "Click Field 1", CssSelector = "{{field1_selector}}" },
+                            new WebTypeAction { DisplayName = "Gõ giá trị 1", CssSelector = "{{field1_selector}}", TextToType = "{{col1}}" },
+                            new WebClickAction { DisplayName = "Click Field 2", CssSelector = "{{field2_selector}}" },
+                            new WebTypeAction { DisplayName = "Gõ giá trị 2", CssSelector = "{{field2_selector}}", TextToType = "{{col2}}" },
+                            new WebClickAction { DisplayName = "Click Submit", CssSelector = "{{submit_selector}}" },
+                            new WaitAction { DisplayName = "Đợi xử lý", DelayMin = 1000, DelayMax = 2000 },
+                        ]
+                    }
+                ]
+            },
+            new MacroTemplate
+            {
+                Name = "🔄 Auto Repeat Click",
+                Description = "Lặp click tại vị trí cố định. Dùng cho farm, auto-click đơn giản.",
+                Category = "idle",
+                Difficulty = "Easy",
+                EstimatedSetupTime = "1 min",
+                DefaultTargetWindow = "{{target_window}}",
+                DefaultRepeatCount = 0,
+                Actions =
+                [
+                    new RepeatAction
+                    {
+                        DisplayName = "🔄 Lặp Click",
+                        RepeatCount = 10,
+                        IntervalMs = 5000,
+                        LoopActions =
+                        [
+                            new ClickAction { DisplayName = "Click vị trí", X = 0, Y = 0 },
+                            new WaitAction { DisplayName = "Đợi", DelayMin = 1000, DelayMax = 1500 },
+                        ]
+                    }
+                ]
+            },
+            new MacroTemplate
+            {
+                Name = "🔍 Image Detect & Click",
+                Description = "Tìm hình ảnh trên cửa sổ, nếu thấy thì click. Lặp vô hạn.",
+                Category = "idle",
+                Difficulty = "Medium",
+                EstimatedSetupTime = "3 min",
+                DefaultTargetWindow = "{{target_window}}",
+                DefaultRepeatCount = 0,
+                Actions =
+                [
+                    new RepeatAction
+                    {
+                        DisplayName = "🔄 Quét hình liên tục",
+                        RepeatCount = 0,
+                        IntervalMs = 2000,
+                        LoopActions =
+                        [
+                            new IfImageAction
+                            {
+                                DisplayName = "NẾU tìm thấy hình",
+                                ImagePath = "{{image_path}}",
+                                Threshold = 0.7,
+                                TimeoutMs = 5000,
+                                ClickOnFound = true,
+                                RandomOffset = 5,
+                                ThenActions = [ new WaitAction { DisplayName = "Đợi sau click", DelayMin = 500, DelayMax = 1000 } ],
+                                ElseActions = [ new WaitAction { DisplayName = "Không thấy — đợi", DelayMin = 1000, DelayMax = 1000 } ],
+                            },
+                            new WaitAction { DisplayName = "Đợi trước lần quét tiếp", DelayMin = 500, DelayMax = 800 },
+                        ]
+                    }
+                ]
+            },
+            new MacroTemplate
+            {
+                Name = "⌨️ Hotkey Automation (Ctrl+S)",
+                Description = "Tự động bấm tổ hợp phím theo chu kỳ. Ví dụ: Ctrl+S mỗi 3 giây.",
+                Category = "general",
+                Difficulty = "Easy",
+                EstimatedSetupTime = "1 min",
+                DefaultTargetWindow = "{{target_window}}",
+                DefaultRepeatCount = 0,
+                Actions =
+                [
+                    new RepeatAction
+                    {
+                        DisplayName = "🔄 Lặp phím tắt",
+                        RepeatCount = 5,
+                        IntervalMs = 3000,
+                        LoopActions =
+                        [
+                            new KeyPressAction { DisplayName = "Ctrl+S", KeyName = "S", VirtualKeyCode = 0x53, Modifiers = new KeyModifiers { Ctrl = true }, HoldDurationMs = 100 },
+                            new WaitAction { DisplayName = "Đợi", DelayMin = 500, DelayMax = 1000 },
+                        ]
+                    }
+                ]
+            },
+            new MacroTemplate
+            {
+                Name = "🎮 Game Skill Rotation",
+                Description = "Bấm skill 1-2-3 liên tục cho game. Dùng RawInput để vượt DirectInput.",
+                Category = "mmorpg",
+                Difficulty = "Easy",
+                EstimatedSetupTime = "2 min",
+                DefaultTargetWindow = "{{target_window}}",
+                DefaultRepeatCount = 0,
+                Actions =
+                [
+                    new RepeatAction
+                    {
+                        DisplayName = "🔄 Lặp Skill",
+                        RepeatCount = 0,
+                        IntervalMs = 2000,
+                        LoopActions =
+                        [
+                            new KeyPressAction { DisplayName = "Skill 1", KeyName = "D1", VirtualKeyCode = 0x31, HoldDurationMs = 80, InputMode = KeyInputMode.RawInput },
+                            new WaitAction { DisplayName = "Đợi", DelayMin = 400, DelayMax = 600 },
+                            new KeyPressAction { DisplayName = "Skill 2", KeyName = "D2", VirtualKeyCode = 0x32, HoldDurationMs = 80, InputMode = KeyInputMode.RawInput },
+                            new WaitAction { DisplayName = "Đợi", DelayMin = 400, DelayMax = 600 },
+                            new KeyPressAction { DisplayName = "Skill 3", KeyName = "D3", VirtualKeyCode = 0x33, HoldDurationMs = 80, InputMode = KeyInputMode.RawInput },
+                            new WaitAction { DisplayName = "Đợi", DelayMin = 800, DelayMax = 1200 },
+                        ]
+                    }
+                ]
+            },
+            // 🍁 MapleStory Auto Farm
+            new MacroTemplate
+            {
+                Name = "🍁 MapleStory Auto Farm",
+                Description = "Auto farm MapleStory: Buff + HP check + Attack + Move + Loot. Dùng Driver Level mode.",
+                Category = "mmorpg",
+                Difficulty = "Advanced",
+                EstimatedSetupTime = "3 min",
+                DefaultTargetWindow = "MapleStory",
+                DefaultRepeatCount = 0,
+                Actions =
+                [
+                    new SetVariableAction { DisplayName = "Set loop counter", VarName = "loop", Value = "0", Operation = "Set" },
+                    new RepeatAction
+                    {
+                        DisplayName = "🔄 Main Farm Loop (infinite)",
+                        RepeatCount = 0,
+                        IntervalMs = 500,
+                        LoopActions =
+                        [
+                            new SetVariableAction { DisplayName = "loop++", VarName = "loop", Value = "1", Operation = "Increment" },
+                            new IfVariableAction
+                            {
+                                DisplayName = "IF loop == 30 → Buff",
+                                VarName = "loop",
+                                CompareOp = "==",
+                                Value = "30",
+                                ThenActions =
+                                [
+                                    new KeyPressAction { DisplayName = "🛡️ Buff (Page Up)", KeyName = "PageUp", VirtualKeyCode = 0x21, HoldDurationMs = 100, InputMode = KeyInputMode.DriverLevel },
+                                    new WaitAction { DisplayName = "Wait buff", DelayMin = 800, DelayMax = 1200 },
+                                    new SetVariableAction { DisplayName = "Reset loop", VarName = "loop", Value = "0", Operation = "Set" },
+                                ],
+                                ElseActions = []
+                            },
+                            new IfPixelColorAction
+                            {
+                                DisplayName = "⚠️ IF HP low",
+                                X = 100, Y = 580,
+                                ExpectedColor = "#1A1A1A",
+                                Tolerance = 40,
+                                ThenActions =
+                                [
+                                    new KeyPressAction { DisplayName = "💊 HP Pot (Insert)", KeyName = "Insert", VirtualKeyCode = 0x2D, HoldDurationMs = 50, InputMode = KeyInputMode.DriverLevel },
+                                    new WaitAction { DisplayName = "Pot cooldown", DelayMin = 200, DelayMax = 400 },
+                                ],
+                                ElseActions = []
+                            },
+                            new KeyPressAction { DisplayName = "⚔️ Attack (Ctrl)", KeyName = "LControlKey", VirtualKeyCode = 0xA2, HoldDurationMs = 80, InputMode = KeyInputMode.DriverLevel },
+                            new WaitAction { DisplayName = "Attack delay", DelayMin = 300, DelayMax = 500 },
+                            new KeyPressAction { DisplayName = "⚔️ Skill 1 (A)", KeyName = "A", VirtualKeyCode = 0x41, HoldDurationMs = 80, InputMode = KeyInputMode.DriverLevel },
+                            new WaitAction { DisplayName = "Skill delay", DelayMin = 400, DelayMax = 700 },
+                            new KeyPressAction { DisplayName = "➡️ Move Right", KeyName = "Right", VirtualKeyCode = 0x27, HoldDurationMs = 600, InputMode = KeyInputMode.DriverLevel },
+                            new WaitAction { DisplayName = "Move delay", DelayMin = 200, DelayMax = 400 },
+                            new KeyPressAction { DisplayName = "💰 Loot (Z)", KeyName = "Z", VirtualKeyCode = 0x5A, HoldDurationMs = 50, InputMode = KeyInputMode.DriverLevel },
+                            new WaitAction { DisplayName = "Loot delay", DelayMin = 100, DelayMax = 300 },
+                        ]
+                    }
+                ]
+            },
             // General Templates
             new MacroTemplate
             {
@@ -575,6 +796,18 @@ public sealed class MacroTemplateService
                     new WaitAction { DisplayName = "Wait Interval", Milliseconds = 30000 },
                     new LogAction { DisplayName = "Log timestamp", Message = "Screenshot at {{timestamp}}" },
                 ]
+            },
+            // Blank Macro
+            new MacroTemplate
+            {
+                Name = "📋 Blank Macro",
+                Description = "Macro trống — bắt đầu từ đầu, tự thêm action.",
+                Category = "general",
+                Difficulty = "Easy",
+                EstimatedSetupTime = "0 min",
+                DefaultTargetWindow = "",
+                DefaultRepeatCount = 1,
+                Actions = []
             },
         ];
     }
