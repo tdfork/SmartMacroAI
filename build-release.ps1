@@ -6,8 +6,7 @@
 
   Output: release_output/
     SmartMacroAI-v{ver}-win-x64.zip          (portable)
-    SmartMacroAI-v{ver}-win-x64.exe          (standalone)
-    SmartMacroAI_Setup_v{ver}.exe            (installer)
+    SmartMacroAI-v{ver}-win-x64-Setup.exe    (installer)
 
   Created by Pham Duy - Giai phap tu dong hoa thong minh.
 #>
@@ -23,6 +22,13 @@ $csproj = Join-Path $PSScriptRoot "SmartMacroAI.csproj"
 [xml]$xml = Get-Content $csproj
 $version = $xml.Project.PropertyGroup.Version
 if (-not $version) { $version = "1.0.0" }
+$assemblyInfo = Join-Path $PSScriptRoot "AssemblyInfo.cs"
+if (Test-Path $assemblyInfo) {
+    $asm = Get-Content $assemblyInfo -Raw
+    $asm = $asm -replace 'AssemblyVersion\("[^"]+"\)', "AssemblyVersion(`"$version.0`")"
+    $asm = $asm -replace 'AssemblyFileVersion\("[^"]+"\)', "AssemblyFileVersion(`"$version.0`")"
+    Set-Content $assemblyInfo $asm -NoNewline
+}
 
 $line = "=" * 40
 Write-Host $line -ForegroundColor Cyan
@@ -69,34 +75,7 @@ foreach ($rt in $runtimes) {
     $sizeMB = [math]::Round((Get-Item $zipPath).Length / 1MB, 1)
     Write-Host ">>> $zipName  ${sizeMB} MB" -ForegroundColor Green
 
-    # Standalone EXE
-    Write-Host ">>> Building standalone EXE ..." -ForegroundColor Yellow
-    $sfDir = Join-Path $PSScriptRoot "publish_singlefile"
-    if (Test-Path $sfDir) { Remove-Item $sfDir -Recurse -Force }
-
-    dotnet publish $csproj `
-        -c Release `
-        -r $rt `
-        --self-contained true `
-        -p:PublishSingleFile=true `
-        -o $sfDir
-
-    if ($LASTEXITCODE -ne 0) {
-        Write-Error "SingleFile build failed for $rt"
-        exit 1
-    }
-
-    Get-ChildItem $sfDir -Recurse -Filter "*.pdb" | Remove-Item -Force
-
-    $exeName = "SmartMacroAI-v$version-$rt.exe"
-    $exeSrc = Join-Path $sfDir "SmartMacroAI.exe"
-    $exeDst = Join-Path $outRoot $exeName
-    Copy-Item $exeSrc $exeDst
-    $sizeMB = [math]::Round((Get-Item $exeDst).Length / 1MB, 1)
-    Write-Host ">>> $exeName  ${sizeMB} MB" -ForegroundColor Green
-
-    # Cleanup singlefile
-    Remove-Item $sfDir -Recurse -Force -ErrorAction SilentlyContinue
+    # ponytail: WPF single-file build crashes during startup on some machines; ship installer + portable zip.
 }
 
 # Installer (Inno Setup)
