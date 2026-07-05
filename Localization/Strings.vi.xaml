@@ -11,7 +11,7 @@
     <system:String x:Key="ui_StealthManager">Quản lý Stealth</system:String>
     <system:String x:Key="ui_Settings">Cài đặt</system:String>
     <system:String x:Key="ui_About">Giới thiệu</system:String>
-    <system:String x:Key="ui_Donate">Mời cà phê</system:String>
+    <system:String x:Key="ui_Donate">Lien he</system:String>
 
     <system:String x:Key="ui_Header_Ready">Sẵn sàng</system:String>
     <system:String x:Key="ui_Header_Running">Đang chạy...</system:String>
@@ -221,19 +221,19 @@
     <system:String x:Key="ui_Coffee_Blurb">Mời tác giả một ly cà phê nếu phần mềm này giúp ích cho bạn!</system:String>
     <system:String x:Key="ui_Bank_Line">MB Bank — PHAM QUOC DUY — 379997999</system:String>
 
-    <!-- Donate Page -->
-    <system:String x:Key="ui_Page_Donate">Mời cà phê</system:String>
-    <system:String x:Key="ui_PageSub_Donate">Ủng hộ tác giả phát triển phần mềm</system:String>
-    <system:String x:Key="ui_Donate_Title">Mời tác giả một ly cà phê ☕</system:String>
-    <system:String x:Key="ui_Donate_Subtitle">Nếu SmartMacroAI giúp ích cho công việc của bạn, hãy ủng hộ để tác giả tiếp tục phát triển và cập nhật phần mềm miễn phí!</system:String>
-    <system:String x:Key="ui_Donate_BankTitle">🏦 Chuyển khoản ngân hàng (QR)</system:String>
-    <system:String x:Key="ui_Donate_BankNote">Quét mã QR bằng app ngân hàng bất kỳ để chuyển khoản.
+    <!-- Contact Page -->
+    <system:String x:Key="ui_Page_Donate">Lien he</system:String>
+    <system:String x:Key="ui_PageSub_Donate">Nhan trien khai macro, automation rieng va ho tro van hanh</system:String>
+    <system:String x:Key="ui_Donate_Title">Custom automation cho van hanh thuc te</system:String>
+    <system:String x:Key="ui_Donate_Subtitle">Ban public nay dung de demo nang luc san pham. Neu can workflow san xuat, nhieu Chrome profile, OCR/image tuning, hoac script rieng, lien he tac gia de trien khai theo yeu cau.</system:String>
+    <system:String x:Key="ui_Donate_BankTitle">Chuyen khoan / QR</system:String>
+    <system:String x:Key="ui_Donate_BankNote">Quet ma QR bang app ngan hang.
 MB Bank — PHAM QUOC DUY — 379997999</system:String>
-    <system:String x:Key="ui_Donate_PaypalTitle">💳 PayPal</system:String>
-    <system:String x:Key="ui_Donate_PaypalNote">Gửi qua PayPal tới email bên trên. Hỗ trợ mọi loại thẻ quốc tế.</system:String>
-    <system:String x:Key="ui_Donate_CopyPaypal">📋 Copy email PayPal</system:String>
-    <system:String x:Key="ui_Donate_Copied">Đã copy email PayPal!</system:String>
-    <system:String x:Key="ui_Donate_Thanks">Cảm ơn bạn rất nhiều! Mỗi đóng góp đều giúp tác giả có thêm động lực phát triển SmartMacroAI tốt hơn. 🙏</system:String>
+    <system:String x:Key="ui_Donate_PaypalTitle">Lien he truc tiep</system:String>
+    <system:String x:Key="ui_Donate_PaypalNote">Gui yeu cau, anh man hinh app dich va workflow mong muon. Tac gia se review roi lam ban rieng hoac script rieng neu phu hop.</system:String>
+    <system:String x:Key="ui_Donate_CopyPaypal">Copy email</system:String>
+    <system:String x:Key="ui_Donate_Copied">Da copy email!</system:String>
+    <system:String x:Key="ui_Donate_Thanks">SmartMacroAI duoc share public de the hien nang luc code va chat luong san pham. Ban trien khai thuong mai co the tuy bien theo workflow tung khach.</system:String>
 
     <system:String x:Key="ui_StopAllMacros">⏹ DỪNG TẤT CẢ MACRO</system:String>
     <system:String x:Key="ui_ProcessBar_Fmt">Đang chạy: {0} macro  |  Đã ẩn: {1} cửa sổ</system:String>

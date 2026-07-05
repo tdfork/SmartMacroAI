@@ -98,7 +98,7 @@ public partial class MainWindow : Window
     // ── Update Checker ──
     /// <summary>Fallback display / parse if assembly version is unavailable.</summary>
     public static string AppVersion => CurrentVersion;
-    private const string CurrentVersion   = "v1.6.0";
+    private const string CurrentVersion   = "v1.6.1";
     private const string GitHubApiUrl     = "https://api.github.com/repos/TroniePh/SmartMacroAI/releases/latest";
     private const string LandingPageUrl   = "https://tronieph.github.io/SmartMacroAI-Website/";
     /// <summary>GitHub rejects API calls without a descriptive User-Agent.</summary>
@@ -1718,6 +1718,35 @@ public partial class MainWindow : Window
 
     // ── Parallel Executor ──
     private ParallelExecutor? _parallelExecutor;
+    private bool _parallelEventsHooked;
+
+    private ParallelExecutor GetParallelExecutor()
+    {
+        _parallelExecutor ??= new ParallelExecutor();
+        if (_parallelEventsHooked) return _parallelExecutor;
+
+        _parallelExecutor.InstanceLog += (id, msg) => Dispatcher.Invoke(() => AppendLog($"[P/{id[..6]}] {msg}"));
+        _parallelExecutor.StatusChanged += (id, status) => Dispatcher.Invoke(() =>
+        {
+            if (status is ParallelInstanceStatus.Completed or ParallelInstanceStatus.Stopped or ParallelInstanceStatus.Error)
+            {
+                foreach (var row in _dashboardRows.Where(r => r.IsRunning && r.IsSelected))
+                {
+                    row.Status = status switch
+                    {
+                        ParallelInstanceStatus.Completed => "Ready",
+                        ParallelInstanceStatus.Error => "Error",
+                        _ => "Ready"
+                    };
+                    break;
+                }
+            }
+            UpdateProcessBar();
+        });
+
+        _parallelEventsHooked = true;
+        return _parallelExecutor;
+    }
 
     private void ChkSelectAllDashboard_Click(object sender, RoutedEventArgs e)
     {
@@ -1728,6 +1757,52 @@ public partial class MainWindow : Window
                 row.IsSelected = isChecked;
         }
     }
+
+    private void BtnRunChromeWindows_Click(object sender, RoutedEventArgs e)
+    {
+        var row = _dashboardRows.FirstOrDefault(r => r.IsSelected && !r.IsRunning);
+        if (row is null)
+        {
+            ShowToast("Tick một macro để chạy trên toàn bộ Chrome.", isError: true);
+            return;
+        }
+
+        if (!CheckMacroLock(row.Script, LanguageManager.GetString("ui_Action_Run")))
+        {
+            ShowToast(LanguageManager.GetString("ui_Msg_LockPasswordRequired"), isError: true);
+            return;
+        }
+
+        var chromeWindows = GetChromeWindows().ToList();
+        if (chromeWindows.Count == 0)
+        {
+            ShowToast("Không tìm thấy cửa sổ Chrome nào.", isError: true);
+            return;
+        }
+
+        row.Script.RepeatCount = row.RunCount;
+        row.Script.IntervalMinutes = row.IntervalMinutes;
+
+        var executor = GetParallelExecutor();
+        executor.MaxConcurrent = Math.Max(executor.MaxConcurrent, chromeWindows.Count);
+
+        int started = executor.RunAll(row.Script, chromeWindows, row.HardwareMode);
+        row.Status = started > 0 ? "Running" : row.Status;
+
+        AppendLog($"[Chrome] Chạy \"{row.MacroName}\" trên {started}/{chromeWindows.Count} cửa sổ Chrome.");
+        ShowToast($"Đã chạy trên {started} cửa sổ Chrome.", isError: started == 0);
+        UpdateProcessBar();
+    }
+
+    private static IEnumerable<IntPtr> GetChromeWindows() =>
+        Win32Api.GetAllVisibleWindows()
+            .Where(w =>
+                w.Handle != IntPtr.Zero &&
+                w.ProcessName.Equals("chrome", StringComparison.OrdinalIgnoreCase) &&
+                w.ClassName.Contains("Chrome_WidgetWin", StringComparison.OrdinalIgnoreCase) &&
+                !string.IsNullOrWhiteSpace(w.Title))
+            .Select(w => w.Handle)
+            .Distinct();
 
     private void BtnRunAllParallel_Click(object sender, RoutedEventArgs e)
     {
@@ -1766,41 +1841,19 @@ public partial class MainWindow : Window
             return;
         }
 
-        _parallelExecutor ??= new ParallelExecutor();
-        _parallelExecutor.InstanceLog += (id, msg) => Dispatcher.Invoke(() => AppendLog($"[P/{id[..6]}] {msg}"));
+        var executor = GetParallelExecutor();
 
         int started = 0;
         foreach (var (script, hwnd, row) in targets)
         {
             var hwnds = new List<IntPtr> { hwnd };
-            int count = _parallelExecutor.RunAll(script, hwnds, row.HardwareMode);
+            int count = executor.RunAll(script, hwnds, row.HardwareMode);
             if (count > 0)
             {
                 row.Status = "Running";
                 started += count;
             }
         }
-
-        // Wire status changes to update row status
-        _parallelExecutor.StatusChanged += (id, status) => Dispatcher.Invoke(() =>
-        {
-            if (status is ParallelInstanceStatus.Completed or ParallelInstanceStatus.Stopped or ParallelInstanceStatus.Error)
-            {
-                // Find the row by matching and update status
-                foreach (var row in _dashboardRows.Where(r => r.IsRunning && r.IsSelected))
-                {
-                    // Simple heuristic: mark first running+selected row as done
-                    row.Status = status switch
-                    {
-                        ParallelInstanceStatus.Completed => "Ready",
-                        ParallelInstanceStatus.Error => "Error",
-                        _ => "Ready"
-                    };
-                    break;
-                }
-            }
-            UpdateProcessBar();
-        });
 
         AppendLog($"[Parallel] Đã chạy {started}/{targets.Count} macro song song");
         ShowToast($"Đã chạy {started} macro song song!", isError: false);

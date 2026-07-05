@@ -107,9 +107,9 @@ if (Test-Path $issCompiler) {
     Write-Host ">>> Building installer ..." -ForegroundColor Yellow
     & $issCompiler $issFile "/DMyAppVersion=$version"
 
-    $setupSrc = Join-Path $PSScriptRoot "installer_out\SmartMacroAI_Setup_v$version.exe"
+    $setupSrc = Join-Path $PSScriptRoot "release\SmartMacroAI-v$version-win-x64-Setup.exe"
     if (Test-Path $setupSrc) {
-        $setupDst = Join-Path $outRoot "SmartMacroAI_Setup_v$version.exe"
+        $setupDst = Join-Path $outRoot "SmartMacroAI-v$version-win-x64-Setup.exe"
         Copy-Item $setupSrc $setupDst
         $sizeMB = [math]::Round((Get-Item $setupDst).Length / 1MB, 1)
         Write-Host ">>> SmartMacroAI_Setup_v$version.exe  ${sizeMB} MB" -ForegroundColor Green

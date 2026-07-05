@@ -11,7 +11,7 @@
     <system:String x:Key="ui_StealthManager">Stealth Manager</system:String>
     <system:String x:Key="ui_Settings">Settings</system:String>
     <system:String x:Key="ui_About">About</system:String>
-    <system:String x:Key="ui_Donate">Donate</system:String>
+    <system:String x:Key="ui_Donate">Contact</system:String>
 
     <system:String x:Key="ui_Header_Ready">Ready</system:String>
     <system:String x:Key="ui_Header_Running">Running...</system:String>
@@ -221,19 +221,19 @@
     <system:String x:Key="ui_Coffee_Blurb">Treat the author to a coffee if this app helps you!</system:String>
     <system:String x:Key="ui_Bank_Line">MB Bank — PHAM QUOC DUY — 379997999</system:String>
 
-    <!-- Donate Page -->
-    <system:String x:Key="ui_Page_Donate">Donate</system:String>
-    <system:String x:Key="ui_PageSub_Donate">Support the developer</system:String>
-    <system:String x:Key="ui_Donate_Title">Buy the author a coffee ☕</system:String>
-    <system:String x:Key="ui_Donate_Subtitle">If SmartMacroAI helps your work, please consider supporting the author to keep developing and updating this free software!</system:String>
-    <system:String x:Key="ui_Donate_BankTitle">🏦 Bank Transfer (QR)</system:String>
-    <system:String x:Key="ui_Donate_BankNote">Scan the QR code with any banking app to transfer.
+    <!-- Contact Page -->
+    <system:String x:Key="ui_Page_Donate">Contact</system:String>
+    <system:String x:Key="ui_PageSub_Donate">Custom automation, deployment support, and commercial work</system:String>
+    <system:String x:Key="ui_Donate_Title">Custom automation for real operations</system:String>
+    <system:String x:Key="ui_Donate_Subtitle">Use this public build as a product demo. For production workflows, Chrome profile farms, OCR/image tuning, or private macro scripts, contact the author for custom implementation.</system:String>
+    <system:String x:Key="ui_Donate_BankTitle">Bank transfer / QR</system:String>
+    <system:String x:Key="ui_Donate_BankNote">Scan the QR code with any banking app.
 MB Bank — PHAM QUOC DUY — 379997999</system:String>
-    <system:String x:Key="ui_Donate_PaypalTitle">💳 PayPal</system:String>
-    <system:String x:Key="ui_Donate_PaypalNote">Send via PayPal to the email above. Supports all international cards.</system:String>
-    <system:String x:Key="ui_Donate_CopyPaypal">📋 Copy PayPal email</system:String>
-    <system:String x:Key="ui_Donate_Copied">PayPal email copied!</system:String>
-    <system:String x:Key="ui_Donate_Thanks">Thank you so much! Every contribution motivates the author to keep improving SmartMacroAI. 🙏</system:String>
+    <system:String x:Key="ui_Donate_PaypalTitle">Direct contact</system:String>
+    <system:String x:Key="ui_Donate_PaypalNote">Send requirements, target app screenshots, and expected workflow. A private build or custom script can be prepared after review.</system:String>
+    <system:String x:Key="ui_Donate_CopyPaypal">Copy email</system:String>
+    <system:String x:Key="ui_Donate_Copied">Email copied!</system:String>
+    <system:String x:Key="ui_Donate_Thanks">SmartMacroAI is shared publicly to demonstrate implementation quality. Commercial deployments can be customized for each customer's workflow.</system:String>
 
     <system:String x:Key="ui_StopAllMacros">⏹ STOP ALL MACROS</system:String>
     <system:String x:Key="ui_ProcessBar_Fmt">Active: {0} macro(s) running  |  Hidden: {1} window(s)</system:String>

@@ -253,8 +253,15 @@
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="{DynamicResource ui_WindowTitle}" FontSize="16" FontWeight="Bold"
                                            Foreground="{StaticResource TextBrush}" />
-                                <TextBlock Text="{x:Static local:MainWindow.AppVersion}" FontSize="10"
-                                           Foreground="{StaticResource OverlayBrush}" Margin="0,-1,0,0" />
+                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                    <TextBlock Text="{x:Static local:MainWindow.AppVersion}" FontSize="10"
+                                               Foreground="{StaticResource OverlayBrush}" />
+                                    <Border Background="#123020" BorderBrush="{StaticResource AccentGreenBrush}" BorderThickness="1"
+                                            CornerRadius="4" Padding="5,1" Margin="8,-1,0,0">
+                                        <TextBlock Text="Public Demo" FontSize="9" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource AccentGreenBrush}" />
+                                    </Border>
+                                </StackPanel>
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>
@@ -270,7 +277,7 @@
                     </Button>
                     <Button x:Name="BtnDonate" Style="{StaticResource SidebarButtonStyle}" Click="BtnDonate_Click">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="☕" FontSize="18" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="↗" FontSize="18" Margin="0,0,12,0" VerticalAlignment="Center"/>
                             <TextBlock Text="{DynamicResource ui_Donate}" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
@@ -509,7 +516,7 @@
             </Border>
 
             <!-- Content Frame -->
-            <Border Grid.Row="1" Padding="12,8,12,6">
+            <Border Grid.Row="1" Padding="16,12,16,10">
                 <Grid x:Name="ContentArea">
 
                     <!-- ────── Dashboard View (Trạm điều hành đa nhiệm) ────── -->
@@ -560,6 +567,7 @@
                             <DockPanel>
                                 <DockPanel DockPanel.Dock="Top" Margin="8,8,8,6">
                                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                        <Button Content="Run Chrome" Click="BtnRunChromeWindows_Click" Padding="12,6" FontSize="11" Margin="0,0,6,0" Style="{StaticResource PrimaryButtonStyle}" ToolTip="Run the first selected macro on every Chrome window" />
                                         <Button Content="▶▶ Run Selected" Click="BtnRunAllParallel_Click" Padding="12,6" FontSize="11" Margin="0,0,6,0" Background="#A6E3A1" Foreground="#1E1E2E" BorderThickness="0" Cursor="Hand" FontWeight="SemiBold" ToolTip="Chạy các macro đã tick (song song)" />
                                         <Button Style="{StaticResource DangerButtonStyle}" Content="{DynamicResource ui_StopAll}" Click="BtnStopAllMacros_Click" Padding="12,6" FontSize="11" Margin="0,0,6,0" />
                                         <Button Click="BtnGlobalHistory_Click" Padding="12,6" FontSize="11" Margin="0,0,6,0" Background="#45475A" Foreground="#CDD6F4" BorderThickness="0" Cursor="Hand">
@@ -1867,65 +1875,106 @@
                         </ScrollViewer>
                     </Grid>
 
-                    <!-- ────── Donate View ────── -->
+                    <!-- ────── Contact / Custom Work View ────── -->
                     <Grid x:Name="DonateView" Visibility="Collapsed">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <StackPanel MaxWidth="520" HorizontalAlignment="Center" Margin="0,8,0,24">
-                                <!-- Header -->
-                                <Border Style="{StaticResource CardStyle}" Padding="20" Margin="0,0,0,12">
-                                    <StackPanel HorizontalAlignment="Center">
-                                        <TextBlock Text="☕" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,8"/>
-                                        <TextBlock Text="{DynamicResource ui_Donate_Title}" FontSize="20" FontWeight="Bold"
-                                                   Foreground="{StaticResource AccentPeachBrush}" HorizontalAlignment="Center"/>
-                                        <TextBlock Text="{DynamicResource ui_Donate_Subtitle}" FontSize="13"
-                                                   Foreground="{StaticResource SubtextBrush}" HorizontalAlignment="Center"
-                                                   TextWrapping="Wrap" TextAlignment="Center" Margin="0,8,0,0"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- QR Bank -->
-                                <Border Style="{StaticResource CardStyle}" Padding="20" Margin="0,0,0,12">
-                                    <StackPanel HorizontalAlignment="Center">
-                                        <TextBlock Text="{DynamicResource ui_Donate_BankTitle}" FontSize="16" FontWeight="SemiBold"
-                                                   Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center" Margin="0,0,0,12"/>
-                                        <Border Width="240" Height="240" Background="White"
-                                                BorderBrush="{StaticResource Surface1Brush}" BorderThickness="1"
-                                                HorizontalAlignment="Center" Padding="6">
-                                            <Image Source="/Assets/qr_bank.png" Stretch="Uniform"/>
+                            <StackPanel MaxWidth="760" HorizontalAlignment="Center" Margin="0,8,0,24">
+                                <Border Style="{StaticResource CardStyle}" Padding="24" Margin="0,0,0,12">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="{DynamicResource ui_Donate_Title}" FontSize="24" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextBrush}"/>
+                                            <TextBlock Text="{DynamicResource ui_Donate_Subtitle}" FontSize="13"
+                                                       Foreground="{StaticResource SubtextBrush}"
+                                                       TextWrapping="Wrap" Margin="0,8,28,0"/>
+                                        </StackPanel>
+                                        <Border Grid.Column="1" Background="#123020" BorderBrush="{StaticResource AccentGreenBrush}"
+                                                BorderThickness="1" CornerRadius="6" Padding="12,8" VerticalAlignment="Top">
+                                            <TextBlock Text="Custom Automation" Foreground="{StaticResource AccentGreenBrush}"
+                                                       FontSize="12" FontWeight="SemiBold"/>
                                         </Border>
-                                        <TextBlock Text="{DynamicResource ui_Donate_BankNote}" FontSize="11"
-                                                   Foreground="{StaticResource SubtextBrush}" HorizontalAlignment="Center"
-                                                   TextAlignment="Center" Margin="0,10,0,0" TextWrapping="Wrap"/>
-                                    </StackPanel>
+                                    </Grid>
                                 </Border>
 
-                                <!-- PayPal -->
-                                <Border Style="{StaticResource CardStyle}" Padding="20" Margin="0,0,0,12">
-                                    <StackPanel HorizontalAlignment="Center">
-                                        <TextBlock Text="{DynamicResource ui_Donate_PaypalTitle}" FontSize="16" FontWeight="SemiBold"
-                                                   Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center" Margin="0,0,0,12"/>
-                                        <Border Background="#11111B" BorderBrush="{StaticResource Surface1Brush}" BorderThickness="1"
-                                                Padding="16,12" HorizontalAlignment="Center">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="📧" FontSize="16" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                <TextBlock Text="nhocbobi22@gmail.com" FontSize="14" FontWeight="SemiBold"
-                                                           Foreground="{StaticResource AccentBlueBrush}" VerticalAlignment="Center"/>
+                                <UniformGrid Columns="3" Margin="0,0,0,12">
+                                    <Border Style="{StaticResource CardStyle}" Margin="0,0,8,0">
+                                        <StackPanel>
+                                            <TextBlock Text="1. Demo" Foreground="{StaticResource AccentBlueBrush}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="Review workflow, target app, and macro feasibility." Foreground="{StaticResource SubtextBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{StaticResource CardStyle}" Margin="4,0">
+                                        <StackPanel>
+                                            <TextBlock Text="2. Build" Foreground="{StaticResource AccentGreenBrush}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="Custom scripts, Chrome profiles, OCR, image matching, and dashboards." Foreground="{StaticResource SubtextBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{StaticResource CardStyle}" Margin="8,0,0,0">
+                                        <StackPanel>
+                                            <TextBlock Text="3. Support" Foreground="{StaticResource AccentPeachBrush}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="Setup, tuning, bug fixes, and handover for daily operation." Foreground="{StaticResource SubtextBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+                                </UniformGrid>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="1.05*" />
+                                        <ColumnDefinition Width="0.95*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Border Grid.Column="0" Style="{StaticResource CardStyle}" Padding="20" Margin="0,0,6,12">
+                                        <StackPanel>
+                                            <TextBlock Text="{DynamicResource ui_Donate_PaypalTitle}" FontSize="16" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextBrush}" Margin="0,0,0,12"/>
+                                            <Border Background="{StaticResource BaseBrush}" BorderBrush="{StaticResource Surface1Brush}" BorderThickness="1"
+                                                    CornerRadius="6" Padding="14,12">
+                                                <StackPanel>
+                                                    <TextBlock Text="Email / PayPal" Foreground="{StaticResource OverlayBrush}" FontSize="11"/>
+                                                    <TextBlock Text="nhocbobi22@gmail.com" FontSize="15" FontWeight="SemiBold"
+                                                               Foreground="{StaticResource AccentBlueBrush}" Margin="0,4,0,0"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <TextBlock Text="{DynamicResource ui_Donate_PaypalNote}" FontSize="12"
+                                                       Foreground="{StaticResource SubtextBrush}" Margin="0,10,0,0" TextWrapping="Wrap"/>
+                                            <Button Content="{DynamicResource ui_Donate_CopyPaypal}" Click="BtnCopyPaypal_Click"
+                                                    Style="{StaticResource PrimaryButtonStyle}" Padding="20,10"
+                                                    HorizontalAlignment="Left" Margin="0,14,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Grid.Column="1" Style="{StaticResource CardStyle}" Padding="20" Margin="6,0,0,12">
+                                        <StackPanel HorizontalAlignment="Center">
+                                            <TextBlock Text="{DynamicResource ui_Donate_BankTitle}" FontSize="16" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                                            <Border Width="220" Height="220" Background="White"
+                                                    BorderBrush="{StaticResource Surface1Brush}" BorderThickness="1"
+                                                    CornerRadius="6" HorizontalAlignment="Center" Padding="6">
+                                                <Image Source="/Assets/qr_bank.png" Stretch="Uniform"/>
+                                            </Border>
+                                            <TextBlock Text="{DynamicResource ui_Donate_BankNote}" FontSize="11"
+                                                       Foreground="{StaticResource SubtextBrush}" HorizontalAlignment="Center"
+                                                       TextAlignment="Center" Margin="0,10,0,0" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+
+                                <Border Style="{StaticResource CardStyle}" Padding="16">
+                                    <StackPanel>
+                                        <TextBlock Text="{DynamicResource ui_Donate_Thanks}" FontSize="13"
+                                                   Foreground="{StaticResource SubtextBrush}" TextWrapping="Wrap"/>
+                                        <Border Background="#2B2416" BorderBrush="{StaticResource AccentYellowBrush}" BorderThickness="1"
+                                                CornerRadius="6" Padding="12" Margin="0,12,0,0">
+                                            <StackPanel>
+                                                <TextBlock Text="Commercial note" Foreground="{StaticResource AccentYellowBrush}" FontWeight="SemiBold"/>
+                                                <TextBlock Text="This public build is a portfolio/demo version. Production deployments can be customized per workflow, account model, and target application." Foreground="{StaticResource SubtextBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"/>
                                             </StackPanel>
                                         </Border>
-                                        <TextBlock Text="{DynamicResource ui_Donate_PaypalNote}" FontSize="11"
-                                                   Foreground="{StaticResource SubtextBrush}" HorizontalAlignment="Center"
-                                                   TextAlignment="Center" Margin="0,10,0,0" TextWrapping="Wrap"/>
-                                        <Button Content="{DynamicResource ui_Donate_CopyPaypal}" Click="BtnCopyPaypal_Click"
-                                                Style="{StaticResource PrimaryButtonStyle}" Padding="20,10"
-                                                HorizontalAlignment="Center" Margin="0,12,0,0"/>
                                     </StackPanel>
-                                </Border>
-
-                                <!-- Thank you -->
-                                <Border Style="{StaticResource CardStyle}" Padding="16">
-                                    <TextBlock Text="{DynamicResource ui_Donate_Thanks}" FontSize="13"
-                                               Foreground="{StaticResource SubtextBrush}" TextWrapping="Wrap"
-                                               TextAlignment="Center" HorizontalAlignment="Center"/>
                                 </Border>
                             </StackPanel>
                         </ScrollViewer>
